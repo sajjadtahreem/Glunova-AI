@@ -23,14 +23,10 @@ streamlit run app.py
 - YES = GDM predicted
 - NO = GDM not predicted
 
-No probability is displayed.
 
 ## About the Project
 
 Glunova-AI was developed as part of a research study investigating machine-learning-based prediction of GDM using routinely available clinical, hematological, and demographic variables.
-
-The underlying study included **204 pregnant women**, including **25 women with GDM and 179 controls**.
-
 The final prediction model uses 15 selected features derived from the study's feature-engineering and feature-selection workflow.
 
 ### Final Model Features
@@ -52,11 +48,6 @@ The model uses the following variables:
 13. Blood Type AB
 14. Blood Type B
 15. Body Mass Index (BMI)
-
-BMI is calculated internally from height and weight:
-
-**BMI = Weight (kg) / Height (m)²**
-
 ---
 
 ## Model
