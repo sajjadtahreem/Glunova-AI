@@ -1,10 +1,20 @@
 # Glunova-AI
 AI based Gestational Diabetes Mellitus Prediction
 
-## Run
 
+# Installation and Setup
+Clone the Repository. First, install Git if it is not already installed.
+Then clone the Glunova-AI repository.
+Open windows powershell or linux shell
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/sajjadtahreem/Glunova-AI
+cd Glunova-AI
+conda create -n glunova python=3.11 -y
+conda activate glunova
+python --version
+Python 3.11.x
+cd path\to\Glunova-AI
+python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
@@ -14,6 +24,51 @@ streamlit run app.py
 - NO = GDM not predicted
 
 No probability is displayed.
+
+## About the Project
+
+Glunova-AI was developed as part of a research study investigating machine-learning-based prediction of GDM using routinely available clinical, hematological, and demographic variables.
+
+The underlying study included **204 pregnant women**, including **25 women with GDM and 179 controls**.
+
+The final prediction model uses 15 selected features derived from the study's feature-engineering and feature-selection workflow.
+
+### Final Model Features
+
+The model uses the following variables:
+
+1. Maternal age
+2. Gravidity
+3. Family History of Diabetes
+4. Mean Diastolic Blood Pressure
+5. Mean Systolic Blood Pressure
+6. Fasting Glucose
+7. Hemoglobin (Hb)
+8. Red Blood Cell count (RBC)
+9. White Blood Cell count (WBC)
+10. Mean Corpuscular Hemoglobin Concentration (MCHC)
+11. Absolute Lymphocyte count
+12. Absolute Eosinophil count
+13. Blood Type AB
+14. Blood Type B
+15. Body Mass Index (BMI)
+
+BMI is calculated internally from height and weight:
+
+**BMI = Weight (kg) / Height (m)²**
+
+---
+
+## Model
+
+The deployed predictive model is a **Random Forest classifier** incorporated into an imbalanced-learning pipeline.
+
+The project contains two serialized model-related files:
+
+```text
+model/
+├── model.pkl
+└── gdm_preprocessor.pkl
 
 ## Research Use Only
 
