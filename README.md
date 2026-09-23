@@ -52,16 +52,9 @@ The model uses the following variables:
 
 ## Model
 
-The deployed predictive model is a **Random Forest classifier** incorporated into an imbalanced-learning pipeline.
-
 The project contains two serialized model-related files:
 
 ```text
 model/
 ├── model.pkl
 └── gdm_preprocessor.pkl
-
-## Research Use Only
-
-This application is intended for research and educational purposes and
-should not replace professional clinical diagnosis or medical decision-making.
