@@ -3,7 +3,7 @@ AI based Gestational Diabetes Mellitus Prediction
 
 
 # Installation and Setup
-Open windows powershell or linux shell
+Open windows powershell or linux shell.
 First, install Git if it is not already installed.
 Then clone the Glunova-AI repository.
 
