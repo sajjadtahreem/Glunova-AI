@@ -3,9 +3,10 @@ AI based Gestational Diabetes Mellitus Prediction
 
 
 # Installation and Setup
-Clone the Repository. First, install Git if it is not already installed.
-Then clone the Glunova-AI repository.
 Open windows powershell or linux shell
+First, install Git if it is not already installed.
+Then clone the Glunova-AI repository.
+
 ```bash
 git clone https://github.com/sajjadtahreem/Glunova-AI
 cd Glunova-AI
