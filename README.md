@@ -187,32 +187,25 @@ Glunova-AI/
 
 ---
 
-## Author
 
-**Tahreem Sajjad**
-Integrative Omics and Molecular Modelling Lab
-Department of Bioinformatics and Biotechnology, Government College
-University Faisalabad
+## Authors
+
+**Tahreem Sajjad**  
+*Integrative Omics and Molecular Modelling Lab, Department of Bioinformatics and Biotechnology, Government College University Faisalabad (GCUF), Faisalabad, Pakistan*  
 Email: [tahreemsajjad1072@gmail.com](mailto:tahreemsajjad1072@gmail.com)
 
----
+**Mr. Rana Sheraz Ahmad**  
+*Integrative Omics and Molecular Modeling Laboratory, Department of Bioinformatics and Biotechnology, Government College University Faisalabad (GCUF), Faisalabad, 38000, Pakistan*  
+Email: [rana.a@lums.edu.pk](mailto:rana.a@lums.edu.pk)
 
-## Customisation
-
-The text and images shown on the site are set in the **`SITE CONTENT`** block
-near the top of `app.py`. You don't need to change any other code.
-
-| Setting | Purpose |
-|---|---|
-| `LAB_NAME`, `LAB_INSTITUTION`, `LAB_ADDRESS`, `LAB_EMAIL`, `LAB_WEBSITE` | Lab details in the header, Team page and footer |
-| `AUTHORS` | Names, roles, affiliations, emails and photos (`assets/team/`) |
-| `PARTNERS` | Collaborating hospitals and logos (`assets/partners/`) |
-| `SLIDES` | Home-page slideshow images (`assets/slides/`, 16:10 ratio) |
-| `CITATION` | Citation text shown in the footer |
-
-Leave a field empty (`""`) to hide it.
+**Dr. Muhammad Tahir ul Qamar** *(Correspondence)*  
+*Integrative Omics and Molecular Modeling Laboratory, Department of Bioinformatics and Biotechnology, Government College University Faisalabad (GCUF), Faisalabad, 38000, Pakistan*  
+Email: [m.tahirulqamar@hotmail.com](mailto:m.tahirulqamar@hotmail.com)
 
 ---
+
+---
+
 
 ## Intended Use
 
