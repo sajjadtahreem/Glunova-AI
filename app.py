@@ -217,7 +217,10 @@ def preprocess_for_model(df):
 # ============================================================
 
 LAB_NAME = "Integrative Omics and Molecular Modelling Lab"
-LAB_INSTITUTION = ""   # e.g. "Department of ..., University of ..."
+LAB_INSTITUTION = (
+    "Department of Bioinformatics and Biotechnology, "
+    "Government College University Faisalabad"
+)
 LAB_ADDRESS = ""       # e.g. "City, Country"
 LAB_EMAIL = ""         # e.g. "contact@university.edu"
 LAB_WEBSITE = ""       # e.g. "https://lab.university.edu"
@@ -226,10 +229,10 @@ CITATION = ""          # e.g. "Author A, et al. Journal (2026). doi:..."
 # Team / authors. "photo" is a file name inside assets/team/ (optional).
 AUTHORS = [
     {
-        "name": "Author Name",
-        "role": "Role / Designation",
+        "name": "Tahreem Sajjad",
+        "role": "",
         "affiliation": LAB_NAME,
-        "email": "",
+        "email": "tahreemsajjad1072@gmail.com",
         "photo": "",
     },
 ]

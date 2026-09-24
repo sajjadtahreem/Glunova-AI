@@ -195,6 +195,16 @@ Glunova-AI/
 
 ---
 
+## Author
+
+**Tahreem Sajjad**
+Integrative Omics and Molecular Modelling Lab
+Department of Bioinformatics and Biotechnology, Government College
+University Faisalabad
+Email: [tahreemsajjad1072@gmail.com](mailto:tahreemsajjad1072@gmail.com)
+
+---
+
 ## Customisation
 
 The text and images shown on the site are set in the **`SITE CONTENT`** block
