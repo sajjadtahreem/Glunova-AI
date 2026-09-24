@@ -91,7 +91,7 @@ receives **15 features**.
 
 ---
 
-## Methodology
+## Machine Learning Algorithm
 
 <p align="center">
   <img src="assets/images/random_forest.png" alt="Random Forest schematic" width="640">
@@ -140,14 +140,6 @@ streamlit run app.py
 
 The application opens at **http://localhost:8501**. Press `Ctrl + C` in the
 terminal to stop it.
-
-| Page | Address |
-|---|---|
-| Home | `http://localhost:8501/` |
-| Patient Assessment | `http://localhost:8501/?page=predict` |
-| Cohort Assessment | `http://localhost:8501/?page=batch` |
-| About | `http://localhost:8501/?page=about` |
-| Team | `http://localhost:8501/?page=team` |
 
 To make the application reachable from other computers on the same network,
 run:
