@@ -1,61 +1,241 @@
-# Glunova-AI
-AI based Gestational Diabetes Mellitus Prediction
+<p align="center">
+  <img src="assets/images/glunova_logo.png" alt="Glunova AI" width="220">
+</p>
 
+<h1 align="center">Glunova AI</h1>
 
-# Installation and Setup
-Open windows powershell or linux shell.
-First, install Git if it is not already installed.
-Then clone the Glunova-AI repository.
+<p align="center">
+  <b>A clinical decision-support web server for Gestational Diabetes Mellitus</b><br>
+  Developed at the Integrative Omics and Molecular Modelling Lab
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.11-2F5597" alt="Python 3.11">
+  <img src="https://img.shields.io/badge/built%20with-Streamlit-2F5597" alt="Streamlit">
+  <img src="https://img.shields.io/badge/model-Random%20Forest-2F5597" alt="Random Forest">
+  <img src="https://img.shields.io/badge/license-MIT-2F5597" alt="MIT License">
+  <img src="https://img.shields.io/badge/use-research%20only-9E2A2B" alt="Research use only">
+</p>
+
+---
+
+## Overview
+
+Gestational Diabetes Mellitus (GDM) is one of the most common metabolic
+complications of pregnancy. Identifying it early allows timely dietary,
+lifestyle and medical management.
+
+**Glunova AI** assesses maternal GDM status from data that are already
+collected during routine antenatal care:
+
+- demographic and obstetric history
+- anthropometry
+- blood pressure
+- fasting plasma glucose
+- the complete blood count
+
+The tool was developed as part of a research study on machine-learning-based
+prediction of GDM. It makes the final Random Forest model openly available
+through a simple web interface.
+
+For each mother, Glunova AI reports one of two outcomes:
+
+| Outcome | Meaning |
+|---|---|
+| **YES** | GDM predicted |
+| **NO**  | GDM not predicted |
+
+A probability or risk score is not reported.
+
+---
+
+## Features
+
+- **Patient Assessment:** record 14 routine antenatal parameters for one
+  mother and see her outcome immediately.
+- **Cohort Assessment:** assess an entire antenatal clinic list or study
+  cohort from one spreadsheet (CSV), and download the results.
+- **Handles incomplete records:** missing laboratory values are estimated
+  with the imputation model fitted during the derivation study.
+- **Exportable reports:** individual and cohort assessments can be
+  downloaded as CSV files.
+- **Transparent methodology:** the model, data handling and clinical data
+  dictionary are documented in the application.
+- **Open access:** no account or login is required.
+
+---
+
+## Clinical Parameters
+
+The model uses 14 parameters, grouped into three clinical domains.
+
+| Domain | Parameter | Unit |
+|---|---|---|
+| Demographic & obstetric | Maternal age | years |
+| | Gravidity | count |
+| | Family history of diabetes | Yes / No |
+| | Blood group | A, B, AB, O |
+| | Body mass index (BMI) | kg/m² |
+| Clinical & biochemical | Mean systolic blood pressure | mmHg |
+| | Mean diastolic blood pressure | mmHg |
+| | Fasting plasma glucose | mg/dL |
+| Haematological (CBC) | Haemoglobin (Hb) | g/dL |
+| | Red blood cell count (RBC) | millions/mL |
+| | White blood cell count (WBC) | ×10³/µL |
+| | Mean corpuscular haemoglobin concentration (MCHC) | g/dL |
+| | Absolute lymphocyte count | ×10³/µL |
+| | Absolute eosinophil count | ×10³/µL |
+
+After blood group is encoded (AB and B, with O and A as reference), the model
+receives **15 features**.
+
+---
+
+## Methodology
+
+<p align="center">
+  <img src="assets/images/random_forest.png" alt="Random Forest schematic" width="640">
+</p>
+
+Glunova AI uses a **Random Forest**, an ensemble of decision trees. Each tree
+is trained on a different sample of the study cohort. For a new maternal
+profile, every tree gives its own assessment, and the reported outcome is
+their **majority vote**.
+
+Each record passes through the same data-handling steps used during model
+development:
+
+1. **Encoding** of blood group.
+2. **Estimation of missing values** with the iterative imputer fitted on the
+   training data.
+3. **Log transformation** of skewed laboratory parameters.
+4. **Selection** of the final model features, in the order used for training.
+
+During model development, class imbalance between GDM-positive and
+GDM-negative mothers was addressed with **SMOTEENN** resampling.
+
+---
+
+## Installation
+
+**Requirements:** Python 3.11 and Git. Conda is recommended.
 
 ```bash
-git clone https://github.com/sajjadtahreem/Glunova-AI
+git clone https://github.com/sajjadtahreem/Glunova-AI.git
 cd Glunova-AI
+
 conda create -n glunova python=3.11 -y
 conda activate glunova
-python --version
-Python 3.11.x
-cd path\to\Glunova-AI
+
 python -m pip install -r requirements.txt
+```
+
+## Running the Application
+
+From inside the `Glunova-AI` folder, run:
+
+```bash
 streamlit run app.py
 ```
 
-## Output
+The application opens at **http://localhost:8501**. Press `Ctrl + C` in the
+terminal to stop it.
 
-- YES = GDM predicted
-- NO = GDM not predicted
+| Page | Address |
+|---|---|
+| Home | `http://localhost:8501/` |
+| Patient Assessment | `http://localhost:8501/?page=predict` |
+| Cohort Assessment | `http://localhost:8501/?page=batch` |
+| About | `http://localhost:8501/?page=about` |
+| Team | `http://localhost:8501/?page=team` |
 
+To make the application reachable from other computers on the same network,
+run:
 
-## About the Project
+```bash
+streamlit run app.py --server.address 0.0.0.0
+```
 
-Glunova-AI was developed as part of a research study investigating machine-learning-based prediction of GDM using routinely available clinical, hematological, and demographic variables.
-The final prediction model uses 15 selected features derived from the study's feature-engineering and feature-selection workflow.
+### Cohort Assessment Input
 
-### Final Model Features
-
-The model uses the following variables:
-
-1. Maternal age
-2. Gravidity
-3. Family History of Diabetes
-4. Mean Diastolic Blood Pressure
-5. Mean Systolic Blood Pressure
-6. Fasting Glucose
-7. Hemoglobin (Hb)
-8. Red Blood Cell count (RBC)
-9. White Blood Cell count (WBC)
-10. Mean Corpuscular Hemoglobin Concentration (MCHC)
-11. Absolute Lymphocyte count
-12. Absolute Eosinophil count
-13. Blood Type AB
-14. Blood Type B
-15. Body Mass Index (BMI)
----
-
-## Model
-
-The project contains two serialized model-related files:
+Download the **data collection template** from the Cohort Assessment page.
+Enter one mother per row, with these column headers:
 
 ```text
-model/
-├── model.pkl
-└── gdm_preprocessor.pkl
+Maternal age, Gravidity, Family History of Diabetes, Mean Diastolic BP,
+Mean Systolic BP, Fasting Glucose (mg/dl), Hb (g/dl), RBC (millions/ml),
+WBC (10^3/uL), MCHC (g/dl), Lymphocytes (Absolute count 10^3/uL),
+Eosinophils (Absolute count 10^3/uL), BMI, Blood Type
+```
+
+- `Family History of Diabetes`: `1` (yes) or `0` (no)
+- `Blood Type`: `A`, `B`, `AB` or `O`
+
+---
+
+## Repository Structure
+
+```text
+Glunova-AI/
+├── app.py                     # Streamlit application (interface + assessment logic)
+├── requirements.txt           # Python dependencies
+├── model/
+│   ├── model.pkl              # Trained Random Forest pipeline
+│   └── gdm_preprocessor.pkl   # Imputer, encoding and feature definitions
+├── assets/
+│   ├── images/                # Logo, GDM illustration, Random Forest figure
+│   ├── slides/                # Home-page slideshow images
+│   ├── partners/              # Collaborating hospital logos
+│   └── team/                  # Team photographs
+├── .streamlit/
+│   └── config.toml            # Theme configuration
+├── LICENSE
+└── README.md
+```
+
+---
+
+## Customisation
+
+The text and images shown on the site are set in the **`SITE CONTENT`** block
+near the top of `app.py`. You don't need to change any other code.
+
+| Setting | Purpose |
+|---|---|
+| `LAB_NAME`, `LAB_INSTITUTION`, `LAB_ADDRESS`, `LAB_EMAIL`, `LAB_WEBSITE` | Lab details in the header, Team page and footer |
+| `AUTHORS` | Names, roles, affiliations, emails and photos (`assets/team/`) |
+| `PARTNERS` | Collaborating hospitals and logos (`assets/partners/`) |
+| `SLIDES` | Home-page slideshow images (`assets/slides/`, 16:10 ratio) |
+| `CITATION` | Citation text shown in the footer |
+
+Leave a field empty (`""`) to hide it.
+
+---
+
+## Intended Use
+
+> **Research use only.** Glunova AI is intended for research and educational
+> purposes. It is not a medical device and does not replace diagnosis of GDM
+> according to established clinical criteria, or the judgement of a qualified
+> healthcare professional.
+
+Values you enter and files you upload are processed only to generate the
+assessment. The application does not store them.
+
+---
+
+## Citation
+
+If Glunova AI supports your research, please acknowledge the
+**Integrative Omics and Molecular Modelling Lab**. A formal citation will be
+added here once the associated study is published.
+
+---
+
+## License
+
+This project is released under the [MIT License](LICENSE).
+
+<p align="center">
+  © 2026 Glunova AI · Integrative Omics and Molecular Modelling Lab
+</p>

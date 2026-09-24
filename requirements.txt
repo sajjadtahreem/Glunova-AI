@@ -2,5 +2,6 @@ streamlit
 pandas
 numpy
 joblib
+pillow
 scikit-learn==1.6.1
 imbalanced-learn==0.14.0

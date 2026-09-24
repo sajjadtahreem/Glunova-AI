@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="416" height="260" fill="#F3F7F9"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2F5597"/>
+    </marker>
+  </defs>
+  <g font-size="12">
+    <rect x="58" y="14" width="300" height="42" rx="5" fill="#fff" stroke="#A9BBDD"/>
+    <text x="74" y="32" font-weight="700" fill="#2F5597">1</text>
+    <text x="92" y="32" font-weight="700" fill="#1F2A33">Antenatal clinical record</text>
+    <text x="92" y="47" font-size="10.5" fill="#5B6B77">14 routine maternal findings incl. CBC</text>
+
+    <rect x="58" y="76" width="300" height="42" rx="5" fill="#fff" stroke="#A9BBDD"/>
+    <text x="74" y="94" font-weight="700" fill="#2F5597">2</text>
+    <text x="92" y="94" font-weight="700" fill="#1F2A33">Data standardisation</text>
+    <text x="92" y="109" font-size="10.5" fill="#5B6B77">Missing lab values estimated · values harmonised</text>
+
+    <rect x="58" y="138" width="300" height="42" rx="5" fill="#2F5597"/>
+    <text x="74" y="156" font-weight="700" fill="#C9D6F0">3</text>
+    <text x="92" y="156" font-weight="700" fill="#fff">Random Forest model</text>
+    <text x="92" y="171" font-size="10.5" fill="#DCE5F5">Majority vote of many decision trees</text>
+
+    <rect x="58" y="200" width="300" height="42" rx="5" fill="#fff" stroke="#A9BBDD"/>
+    <text x="74" y="218" font-weight="700" fill="#2F5597">4</text>
+    <text x="92" y="218" font-weight="700" fill="#1F2A33">GDM assessment</text>
+    <text x="92" y="233" font-size="10.5" fill="#5B6B77">GDM predicted (YES) or not predicted (NO)</text>
+  </g>
+  <g stroke="#2F5597" stroke-width="1.6" marker-end="url(#a)">
+    <line x1="208" y1="57" x2="208" y2="72"/>
+    <line x1="208" y1="119" x2="208" y2="134"/>
+    <line x1="208" y1="181" x2="208" y2="196"/>
+  </g>
+</svg>

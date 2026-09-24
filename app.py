@@ -10,6 +10,8 @@ Run:
 Research Use Only.
 """
 
+import base64
+import io
 import os
 import sys
 from pathlib import Path
@@ -18,6 +20,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
+from PIL import Image
 
 
 # ============================================================
@@ -39,7 +42,7 @@ def resource_path(relative_path):
 
 MODEL_PATH = Path(resource_path("model/model.pkl"))
 PREPROCESSOR_PATH = Path(resource_path("model/gdm_preprocessor.pkl"))
-LOGO_PATH = Path(resource_path("glunova_logo.png"))
+LOGO_PATH = Path(resource_path("assets/images/glunova_logo.png"))
 
 
 # ============================================================
@@ -48,9 +51,9 @@ LOGO_PATH = Path(resource_path("glunova_logo.png"))
 
 st.set_page_config(
     page_title="Glunova AI | GDM Prediction",
-    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else "🩺",
+    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else None,
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -209,366 +212,1608 @@ def preprocess_for_model(df):
 
 
 # ============================================================
-# SIDEBAR
+# SITE CONTENT
+# Edit the values below; empty strings ("") are hidden on the page.
 # ============================================================
 
-with st.sidebar:
+LAB_NAME = "Integrative Omics and Molecular Modelling Lab"
+LAB_INSTITUTION = ""   # e.g. "Department of ..., University of ..."
+LAB_ADDRESS = ""       # e.g. "City, Country"
+LAB_EMAIL = ""         # e.g. "contact@university.edu"
+LAB_WEBSITE = ""       # e.g. "https://lab.university.edu"
+CITATION = ""          # e.g. "Author A, et al. Journal (2026). doi:..."
 
-    st.header("About")
+# Team / authors. "photo" is a file name inside assets/team/ (optional).
+AUTHORS = [
+    {
+        "name": "Author Name",
+        "role": "Role / Designation",
+        "affiliation": LAB_NAME,
+        "email": "",
+        "photo": "",
+    },
+]
 
-    st.info(
-        """
-        **Glunova AI** is an AI-based classification tool
-        developed for prediction of Gestational Diabetes
-        Mellitus (GDM).
+# Collaborating hospitals shown in the logo banner on the home page.
+# "logo" is a file name inside assets/partners/; a labelled placeholder is
+# shown until the file exists.
+PARTNERS = [
+    {"name": "Hospital name", "logo": "hospital1.png"},
+    {"name": "Hospital name", "logo": "hospital2.png"},
+    {"name": "Hospital name", "logo": "hospital3.png"},
+    {"name": "Hospital name", "logo": "hospital4.png"},
+]
 
-        **Research Use Only.**
-        """
+# Hero slideshow: (image file inside assets/slides/, caption).
+# Images are 16:10 (e.g. 832 x 520 px); PNG, JPG or SVG.
+SLIDES_DIR = Path(resource_path("assets/slides"))
+SLIDES = [
+    ("01_gdm.jpg", "Gestational Diabetes Mellitus: early identification "
+                   "supports timely antenatal care"),
+    ("02_workflow.svg", "From the antenatal record to a GDM assessment"),
+    ("03_variables.svg", "Routine maternal parameters used by Glunova AI"),
+]
+SLIDE_SECONDS = 5
+
+TEAM_DIR = Path(resource_path("assets/team"))
+PARTNERS_DIR = Path(resource_path("assets/partners"))
+RANDOM_FOREST_FIGURE = Path(resource_path("assets/images/random_forest.png"))
+
+PAGES = {
+    "home": "Home",
+    "predict": "Patient Assessment",
+    "batch": "Cohort Assessment",
+    "about": "About",
+    "team": "Team",
+}
+
+
+# ============================================================
+# STYLING
+# ============================================================
+
+CUSTOM_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+:root {
+    --gn-primary: #2F5597;
+    --gn-primary-dark: #23427A;
+    --gn-primary-tint: #EAF0F9;
+    --gn-ink: #1F2A33;
+    --gn-muted: #5B6B77;
+    --gn-line: #DCE2EC;
+    --gn-surface: #F5F7FB;
+    --gn-positive: #9E2A2B;
+    --gn-positive-tint: #FBEFEF;
+    --gn-negative: #1E6B4F;
+    --gn-negative-tint: #ECF5F1;
+}
+
+html, body, .stApp, [class*="css"] {
+    font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, sans-serif;
+    color: var(--gn-ink);
+}
+.stApp { background: #FFFFFF; }
+
+h1, h2, h3, h4 {
+    font-family: 'Source Serif 4', Georgia, serif !important;
+    color: var(--gn-ink);
+}
+
+/* ---------- Page frame ----------
+   The root font size scales with the viewport (about 15px on a small
+   laptop, 18px on a full-HD screen), and every size below is in rem, so
+   the whole page keeps the same proportions on any screen. */
+html { font-size: clamp(14px, 0.42vw + 10px, 19px) !important; }
+
+/* Content sits in a centred column (like most academic web servers),
+   leaving white margins on wide screens; the gutter keeps a minimum
+   margin on small screens. */
+.stApp { --gn-gutter: clamp(1rem, 3vw, 2.5rem); --gn-content: 78rem; }
+[data-testid="stMain"] { overflow-x: hidden; }
+
+.block-container {
+    max-width: calc(var(--gn-content) + 2 * var(--gn-gutter)) !important;
+    margin: 0 auto;
+    padding: 0 var(--gn-gutter) 0 var(--gn-gutter);
+}
+header[data-testid="stHeader"] { display: none; }
+[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] {
+    display: none;
+}
+[data-testid="stMainBlockContainer"] { padding-top: 0 !important; }
+[data-testid="stMain"] { padding-top: 0 !important; }
+/* The element holding this stylesheet should not take up layout space */
+[data-testid="stElementContainer"]:has(style) { display: none; }
+
+/* Keep the footer at the bottom on short pages */
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] {
+    min-height: calc(100vh - 1rem);
+}
+[data-testid="stElementContainer"]:has(.gn-footer) { margin-top: auto; }
+
+/* Full-width bands (partner banner, footer): the background spans the
+   whole window while the content stays aligned with the centred column. */
+.gn-bleed {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-left: calc(50vw - 50%);
+    padding-right: calc(50vw - 50%);
+}
+
+a { color: var(--gn-primary); }
+
+/* ---------- Navigation bar ---------- */
+.gn-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    padding-top: 0.9rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--gn-line);
+    background: #FFFFFF;
+}
+.gn-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none !important;
+}
+.gn-brand img { width: 42px; height: 42px; object-fit: contain; }
+.gn-brand span {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--gn-primary);
+    letter-spacing: 0.01em;
+}
+.gn-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.6rem;
+}
+.gn-links a {
+    font-size: 0.95rem;
+    color: var(--gn-ink) !important;
+    text-decoration: none !important;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+}
+.gn-links a:hover { color: var(--gn-primary) !important; }
+.gn-links a.active {
+    color: var(--gn-primary) !important;
+    border-bottom-color: var(--gn-primary);
+}
+.gn-links a.gn-cta {
+    background: var(--gn-primary);
+    color: #FFFFFF !important;
+    border-radius: 999px;
+    padding: 0.45rem 1.1rem;
+    border: none;
+    font-weight: 600;
+}
+.gn-links a.gn-cta:hover { background: var(--gn-primary-dark); }
+
+/* ---------- Page title (inner pages) ---------- */
+.gn-pagehead {
+    border-bottom: 1px solid var(--gn-line);
+    padding-top: 2rem;
+    padding-bottom: 1.4rem;
+    margin-bottom: 1.8rem;
+}
+.gn-pagehead h1 {
+    font-size: 1.9rem !important;
+    font-weight: 700;
+    color: var(--gn-primary) !important;
+    margin: 0;
+    padding: 0;
+}
+.gn-pagehead p {
+    color: var(--gn-muted);
+    margin: 0.3rem 0 0 0;
+    font-size: 1rem;
+}
+.gn-crumb {
+    font-size: 0.8rem;
+    color: var(--gn-muted);
+    margin-bottom: 0.4rem;
+}
+.gn-crumb a { text-decoration: none; }
+
+/* ---------- Hero (fills the first screen) ---------- */
+.st-key-hero {
+    min-height: calc(100vh - 5rem);
+    justify-content: center;
+    padding: 2rem 0;
+}
+.gn-hero-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(2.6rem, 4.2vw, 4.4rem);
+    font-weight: 700;
+    color: var(--gn-primary);
+    line-height: 1.05;
+    margin: 0 0 0.6rem 0;
+}
+.gn-hero-tag {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.45rem;
+    color: var(--gn-primary);
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+.gn-hero-text {
+    font-size: 1.15rem;
+    color: var(--gn-ink);
+    line-height: 1.65;
+    max-width: 40rem;
+    margin-bottom: 1.6rem;
+}
+.gn-btn {
+    display: inline-block;
+    padding: 0.6rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none !important;
+    margin: 0 0.6rem 0.6rem 0;
+    border: 1.5px solid var(--gn-primary);
+}
+.gn-btn.primary { background: var(--gn-primary); color: #FFFFFF !important; }
+.gn-btn.primary:hover { background: var(--gn-primary-dark); }
+.gn-btn.outline { background: #FFFFFF; color: var(--gn-primary) !important; }
+.gn-btn.outline:hover { background: var(--gn-primary-tint); }
+
+.gn-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    max-width: 40rem;
+    gap: 1rem;
+    margin: 1.8rem 0 1rem 0;
+}
+.gn-stat {
+    padding: 0.9rem 1.1rem;
+    border-radius: 6px;
+    background: #FFFFFF;
+    box-shadow: 0 2px 10px rgba(20, 40, 90, 0.10);
+    text-align: center;
+}
+.gn-stat .num {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--gn-primary);
+    line-height: 1.1;
+}
+.gn-stat .lbl {
+    font-size: 0.78rem;
+    color: var(--gn-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.2rem;
+}
+
+/* ---------- Section headings (centred between rules) ---------- */
+.gn-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 3.4rem 0 1.6rem 0;
+}
+.gn-heading::before, .gn-heading::after {
+    content: "";
+    width: 3rem;
+    height: 2px;
+    background: var(--gn-primary);
+}
+.gn-heading span {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gn-ink);
+}
+@media (max-width: 700px) {
+    .gn-heading span { font-size: 1.25rem; text-align: center; }
+    .gn-heading::before, .gn-heading::after { width: 1.5rem; }
+    .gn-partners { gap: 1rem; }
+    .gn-partner { width: 44%; }
+}
+.gn-lead {
+    text-align: center;
+    max-width: 58rem;
+    margin: -0.6rem auto 1.8rem auto !important;
+    color: var(--gn-muted);
+    font-size: 1.02rem;
+    line-height: 1.6;
+}
+.gn-band {
+    background: var(--gn-surface);
+    padding-top: 0.2rem;
+    padding-bottom: 2.6rem;
+    margin-top: 3rem;
+}
+.gn-band .gn-heading { margin-top: 2.6rem; }
+
+/* ---------- Feature tiles ---------- */
+.gn-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+}
+@media (max-width: 1100px) { .gn-features { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .gn-features { grid-template-columns: 1fr; } }
+.gn-feature {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    background: #FFFFFF;
+    border: 1px solid var(--gn-line);
+    border-radius: 6px;
+    padding: 1rem 1.1rem;
+}
+.gn-feature svg { flex-shrink: 0; margin-top: 0.1rem; }
+.gn-feature { padding: 1.2rem 1.3rem; }
+.gn-feature b { display: block; font-size: 1.02rem; margin-bottom: 0.25rem; }
+.gn-feature div { font-size: 0.92rem; color: var(--gn-muted); line-height: 1.55; }
+
+/* ---------- Cards ---------- */
+.gn-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.4rem;
+}
+.gn-cards.three {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.gn-cards.three > .gn-card { width: 20rem; }
+@media (max-width: 900px) {
+    .gn-cards { grid-template-columns: 1fr; }
+    .gn-cards.three > .gn-card { width: 100%; }
+}
+.gn-card {
+    background: #FFFFFF;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(20, 40, 90, 0.09);
+    padding: 1.3rem 1.4rem;
+}
+.gn-card h4 {
+    font-size: 1.08rem !important;
+    font-weight: 600;
+    margin: 0 0 0.4rem 0 !important;
+    padding: 0 !important;
+}
+.gn-card p { font-size: 0.94rem; color: var(--gn-muted); line-height: 1.55; }
+.gn-card img { width: 100%; border-radius: 4px; margin-top: 0.6rem; }
+.gn-card .venue { font-size: 0.86rem; color: var(--gn-muted); margin-bottom: 0.4rem; }
+.gn-card .more {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+/* ---------- Steps ---------- */
+.gn-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+}
+@media (max-width: 1100px) { .gn-steps { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .gn-steps { grid-template-columns: 1fr; } }
+.gn-steps .gn-card { box-shadow: none; border: 1px solid var(--gn-line); }
+.gn-step-num {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--gn-primary);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+/* ---------- Figure ---------- */
+.gn-figure {
+    background: #FFFFFF;
+    border: 1px solid var(--gn-line);
+    border-radius: 8px;
+    padding: 1rem;
+}
+.gn-figure img { width: 100%; display: block; }
+.gn-figcap {
+    font-size: 0.86rem;
+    color: var(--gn-muted);
+    border-top: 1px solid var(--gn-line);
+    padding-top: 0.6rem;
+    margin-top: 0.4rem;
+    line-height: 1.5;
+}
+
+/* ---------- Collaborating hospitals ---------- */
+.gn-partners {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 2.5rem 4rem;
+}
+.gn-partner {
+    width: 11rem;
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gn-partner img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.gn-partner.placeholder {
+    flex-direction: column;
+    border: 2px dashed #B9C7E0;
+    border-radius: 6px;
+    background: #FFFFFF;
+    color: var(--gn-muted);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 0.5rem;
+}
+.gn-partner.placeholder b { color: var(--gn-primary); font-size: 0.88rem; }
+.gn-partner.placeholder code {
+    font-size: 0.68rem; background: none; color: var(--gn-muted);
+    word-break: break-all; white-space: normal;
+}
+
+/* ---------- FAQ ---------- */
+.gn-faq { max-width: 80rem; margin: 0 auto; }
+.gn-faq-row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 2rem;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--gn-line);
+}
+@media (max-width: 900px) { .gn-faq-row { grid-template-columns: 1fr; gap: 0.4rem; } }
+.gn-faq-q { font-weight: 600; font-size: 0.98rem; display: flex; gap: 0.5rem; }
+.gn-faq-q span {
+    flex-shrink: 0;
+    width: 1.3rem; height: 1.3rem;
+    border: 1.5px solid var(--gn-primary);
+    border-radius: 50%;
+    color: var(--gn-primary);
+    font-size: 0.75rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.gn-faq-a { font-size: 0.95rem; color: var(--gn-muted); line-height: 1.6; }
+
+/* ---------- Team ---------- */
+.gn-person { text-align: center; }
+.gn-avatar {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    margin: 0 auto 0.8rem auto;
+    background: var(--gn-primary-tint);
+    color: var(--gn-primary);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    overflow: hidden;
+}
+.gn-avatar img { width: 100%; height: 100%; object-fit: cover; margin: 0; border-radius: 0; }
+.gn-person .role { color: var(--gn-primary); font-size: 0.9rem; font-weight: 600; }
+.gn-person .aff { color: var(--gn-muted); font-size: 0.88rem; }
+
+/* ---------- Slideshow ---------- */
+.gn-slideshow {
+    margin-top: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #FFFFFF;
+    box-shadow: 0 4px 22px rgba(20, 40, 90, 0.12);
+}
+.gn-slides {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: #FFFFFF;
+}
+.gn-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    animation: gn-fade var(--gn-cycle) infinite;
+}
+.gn-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+.gn-slidebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 1rem;
+    border-top: 1px solid var(--gn-line);
+}
+.gn-captions { position: relative; height: 1.3rem; flex: 1; }
+.gn-caption {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    font-size: 0.85rem;
+    color: var(--gn-muted);
+    animation: gn-fade var(--gn-cycle) infinite;
+}
+.gn-dots { display: flex; gap: 0.4rem; }
+.gn-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gn-line);
+    animation: gn-dot var(--gn-cycle) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .gn-slide, .gn-caption, .gn-dot { animation: none; }
+    .gn-slide:first-child, .gn-caption:first-child { opacity: 1; }
+}
+
+/* ---------- Form section cards ---------- */
+[class*="st-key-card_"] {
+    border: 1px solid var(--gn-line);
+    border-radius: 6px;
+    padding: 1.1rem 1.3rem 0.6rem 1.3rem;
+    background: #FFFFFF;
+}
+.gn-section-head { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 0.15rem; }
+.gn-section-num {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 0.95rem; font-weight: 600; color: var(--gn-primary);
+}
+.gn-section-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.12rem; font-weight: 600; color: var(--gn-ink);
+}
+.gn-section-desc {
+    font-size: 0.86rem; color: var(--gn-muted);
+    margin: 0 0 0.6rem 0; padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--gn-line);
+}
+.gn-intro { font-size: 0.95rem; color: var(--gn-muted); margin: 0 0 0.9rem 0; }
+
+/* ---------- Inputs ---------- */
+[data-testid="stWidgetLabel"] p {
+    font-size: 0.86rem !important; font-weight: 500; color: var(--gn-ink);
+}
+[data-testid="stNumberInput"] input, [data-baseweb="select"] > div {
+    font-size: 0.92rem; min-height: 2.35rem;
+}
+[data-testid="stNumberInputContainer"], [data-baseweb="select"] > div {
+    border-color: var(--gn-line) !important;
+    background: var(--gn-surface) !important;
+}
+[data-testid="stNumberInputContainer"]:focus-within,
+[data-baseweb="select"] > div:focus-within {
+    border-color: var(--gn-primary) !important;
+}
+[data-testid="stForm"] { border: none; padding: 0; }
+
+/* ---------- Buttons ---------- */
+[data-testid="stFormSubmitButton"] > button,
+[data-testid="stDownloadButton"] > button {
+    border-radius: 999px; font-weight: 600; padding: 0.55rem 1.4rem;
+}
+[data-testid="stFormSubmitButton"] > button[kind="primaryFormSubmit"] {
+    background: var(--gn-primary); border: 1px solid var(--gn-primary);
+}
+[data-testid="stFormSubmitButton"] > button[kind="primaryFormSubmit"]:hover {
+    background: var(--gn-primary-dark); border-color: var(--gn-primary-dark);
+}
+[data-testid="stDownloadButton"] > button {
+    border: 1.5px solid var(--gn-primary); color: var(--gn-primary); background: #FFFFFF;
+}
+[data-testid="stDownloadButton"] > button:hover {
+    background: var(--gn-primary-tint); color: var(--gn-primary-dark);
+}
+
+/* ---------- Result ---------- */
+.gn-result {
+    border: 1px solid var(--gn-line);
+    border-left: 5px solid var(--gn-accent);
+    background: var(--gn-accent-tint);
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 0 0 1rem 0;
+}
+.gn-result.positive { --gn-accent: var(--gn-positive); --gn-accent-tint: var(--gn-positive-tint); }
+.gn-result.negative { --gn-accent: var(--gn-negative); --gn-accent-tint: var(--gn-negative-tint); }
+.gn-result.pending { --gn-accent: var(--gn-line); --gn-accent-tint: var(--gn-surface); }
+.gn-result.pending .gn-result-text { color: var(--gn-muted); font-size: 0.9rem; }
+.gn-result-label {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gn-muted);
+}
+.gn-result-value {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 2.1rem; font-weight: 600; color: var(--gn-accent);
+    line-height: 1.2; margin: 0.15rem 0 0.3rem 0;
+}
+.gn-result-text { font-size: 0.97rem; color: var(--gn-ink); }
+.gn-note {
+    font-size: 0.85rem; color: var(--gn-muted);
+    border-top: 1px solid var(--gn-line);
+    padding-top: 0.6rem; margin-top: 0.4rem;
+}
+.gn-h {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.25rem; font-weight: 600; color: var(--gn-ink);
+    margin: 1.2rem 0 0.5rem 0;
+}
+.gn-list { padding-left: 1.1rem; margin: 0.4rem 0 1rem 0; }
+.gn-list li, .gn-side-text {
+    font-size: 0.9rem !important; line-height: 1.5; margin-bottom: 0.3rem;
+}
+[class*="st-key-card_guidance"] { padding-bottom: 1rem; }
+[class*="st-key-card_guidance"] .gn-section-title { font-size: 1rem; }
+
+/* ---------- Metrics ---------- */
+[data-testid="stMetric"] {
+    border: 1px solid var(--gn-line); border-radius: 6px;
+    padding: 0.8rem 1rem; background: var(--gn-surface);
+}
+[data-testid="stMetricValue"] {
+    font-family: 'Source Serif 4', Georgia, serif; color: var(--gn-primary);
+}
+
+/* ---------- Steps (batch) ---------- */
+.gn-step {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gn-primary);
+}
+.gn-step-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.05rem; font-weight: 600; margin: 0.1rem 0 0.3rem 0;
+}
+.gn-step-text { font-size: 0.88rem; color: var(--gn-muted); margin-bottom: 0.7rem; }
+
+/* ---------- About ---------- */
+.gn-prose p, .gn-prose li { font-size: 0.98rem; line-height: 1.65; }
+.gn-spec { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.gn-spec, .gn-spec tr { border: none !important; }
+.gn-spec td {
+    padding: 0.5rem 0.2rem;
+    border: none !important;
+    border-bottom: 1px solid var(--gn-line) !important;
+    vertical-align: top;
+}
+.gn-spec td:first-child { color: var(--gn-muted); width: 42%; }
+.gn-spec td:last-child { font-weight: 500; }
+
+/* ---------- Footer ---------- */
+.gn-footer {
+    margin-top: 3.5rem;
+    background: #16264A;
+    color: #C3D5DE;
+    font-size: 0.87rem;
+    line-height: 1.6;
+}
+.gn-footer-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr 1fr 1fr;
+    gap: 2rem;
+    padding: 2.4rem 0 1.6rem 0;
+}
+@media (max-width: 900px) {
+    .gn-footer-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+}
+.gn-footer h5 {
+    font-family: 'Source Sans 3', sans-serif !important;
+    font-size: 0.74rem; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #FFFFFF;
+    margin: 0 0 0.6rem 0; padding: 0;
+}
+.gn-footer-brand {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.3rem; font-weight: 600; color: #FFFFFF; margin-bottom: 0.4rem;
+}
+.gn-footer p { margin: 0 0 0.3rem 0; font-size: 0.87rem; }
+.gn-footer .gn-lab { color: #FFFFFF; font-weight: 600; }
+.gn-footer-lab { margin-top: 0.9rem; }
+.gn-author { margin-bottom: 0.7rem; }
+.gn-footer p.gn-author-name { color: #FFFFFF; font-weight: 600; margin: 0; }
+.gn-footer p.gn-author-meta { margin: 0; font-size: 0.83rem; }
+.gn-footer a { color: #A9C3F0; text-decoration: none; }
+.gn-footer a:hover { text-decoration: underline; }
+.gn-footer-links a { display: block; margin-bottom: 0.25rem; }
+.gn-footer-bottom {
+    border-top: 1px solid #2E4270;
+    padding: 0.9rem 0 1rem 0;
+    font-size: 0.8rem;
+    color: #93AEBB;
+}
+</style>
+"""
+
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+def image_data_uri(path):
+    mime = {
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }.get(path.suffix.lower(), "image/png")
+    return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
+
+
+@st.cache_data
+def logo_emblem_base64():
+    """Crop the emblem (without the wordmark) and return it as base64 PNG."""
+    image = Image.open(LOGO_PATH).convert("RGB")
+    w, h = image.size
+    emblem = image.crop(
+        (int(w * 0.19), int(h * 0.045), int(w * 0.81), int(h * 0.66))
+    )
+    emblem.thumbnail((160, 160))
+    buffer = io.BytesIO()
+    emblem.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
+
+
+def available_slides():
+    return [
+        (SLIDES_DIR / name, caption)
+        for name, caption in SLIDES
+        if (SLIDES_DIR / name).exists()
+    ]
+
+
+def slideshow_keyframes():
+    n = max(len(available_slides()), 1)
+    if n == 1:
+        return (
+            "@keyframes gn-fade {0%, 100% {opacity: 1}}"
+            "@keyframes gn-dot {0%, 100% {background: #2F5597}}"
+        )
+    visible = 100 / n
+    fade = min(4, visible / 4)
+    return (
+        "@keyframes gn-fade {"
+        f"0% {{opacity: 0}} {fade:.2f}% {{opacity: 1}} "
+        f"{visible:.2f}% {{opacity: 1}} {visible + fade:.2f}% {{opacity: 0}} "
+        "100% {opacity: 0}}"
+        "@keyframes gn-dot {"
+        f"0% {{background: #2F5597}} {visible:.2f}% {{background: #2F5597}} "
+        f"{visible + 0.01:.2f}% {{background: #DCE2EC}} "
+        "100% {background: #DCE2EC}}"
     )
 
-    st.divider()
 
-    st.markdown("### Model")
-    st.success("Random Forest Classifier")
+@st.cache_data
+def slideshow_html():
+    """Auto-advancing CSS slideshow (no JavaScript needed)."""
+    slides = available_slides()
+    if not slides:
+        return ""
 
-    st.divider()
+    cycle = len(slides) * SLIDE_SECONDS
 
-    st.markdown("### Prediction Output")
-    st.write("**YES** = GDM predicted")
-    st.write("**NO** = GDM not predicted")
+    def delay(i):
+        return f'style="animation-delay:{i * SLIDE_SECONDS}s"'
+
+    images = "".join(
+        f'<div class="gn-slide" {delay(i)}>'
+        f'<img src="{image_data_uri(path)}" alt="{caption}"></div>'
+        for i, (path, caption) in enumerate(slides)
+    )
+    captions = "".join(
+        f'<div class="gn-caption" {delay(i)}>{caption}</div>'
+        for i, (_, caption) in enumerate(slides)
+    )
+    dots = "".join(
+        f'<span class="gn-dot" {delay(i)}></span>'
+        for i in range(len(slides))
+    )
+
+    return (
+        f'<div class="gn-slideshow" style="--gn-cycle:{cycle}s">'
+        f'<div class="gn-slides">{images}</div>'
+        f'<div class="gn-slidebar"><div class="gn-captions">{captions}</div>'
+        f'<div class="gn-dots">{dots}</div></div></div>'
+    )
+
+
+def html(markup):
+    st.markdown(markup, unsafe_allow_html=True)
+
+
+def page_link(page):
+    return f"?page={page}"
+
+
+def heading(title):
+    html(f'<div class="gn-heading"><span>{title}</span></div>')
+
+
+def page_header(title, subtitle):
+    html(
+        f'<div class="gn-pagehead">'
+        f'<div class="gn-crumb"><a href="{page_link("home")}" '
+        f'target="_self">Home</a> &rsaquo; {title}</div>'
+        f"<h1>{title}</h1><p>{subtitle}</p></div>"
+    )
+
+
+def section_header(number, title, description):
+    html(
+        f'<div class="gn-section-head">'
+        f'<span class="gn-section-num">{number}</span>'
+        f'<span class="gn-section-title">{title}</span></div>'
+        f'<p class="gn-section-desc">{description}</p>'
+    )
+
+
+def icon(path_d):
+    return (
+        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" '
+        'stroke="#2F5597" stroke-width="1.7" stroke-linecap="round" '
+        f'stroke-linejoin="round">{path_d}</svg>'
+    )
+
+
+ICONS = {
+    "person": '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    "table": '<rect x="3" y="4" width="18" height="16" rx="2"/>'
+             '<path d="M3 10h18M3 15h18M9 4v16"/>',
+    "flow": '<circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/>'
+            '<circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l5 8M18 8l-5 8"/>',
+    "drop": '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+    "download": '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+    "book": '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/>'
+            '<path d="M4 19V5"/>',
+}
 
 
 # ============================================================
-# HEADER / BRANDING
+# NAVIGATION
 # ============================================================
 
-if LOGO_PATH.exists():
-    logo_left, logo_center, logo_right = st.columns([1, 2, 1])
-    with logo_center:
-        st.image(str(LOGO_PATH), width=520)
-else:
-    st.title("Glunova AI")
-    st.subheader("AI-based Gestational Diabetes Mellitus Prediction Tool")
+page = st.query_params.get("page", "home")
+if page not in PAGES:
+    page = "home"
 
-st.caption("AI-based Gestational Diabetes Mellitus Prediction Tool")
-st.divider()
+
+def render_nav():
+    links = "".join(
+        f'<a href="{page_link(key)}" target="_self" '
+        f'class="{"active" if key == page else ""}">{label}</a>'
+        for key, label in PAGES.items()
+    )
+    logo = (
+        f'<img src="data:image/png;base64,{logo_emblem_base64()}" alt="">'
+        if LOGO_PATH.exists() else ""
+    )
+    html(
+        f'<div class="gn-bleed gn-nav">'
+        f'<a class="gn-brand" href="{page_link("home")}" target="_self">'
+        f"{logo}<span>Glunova AI</span></a>"
+        f'<div class="gn-links">{links}'
+        f'<a class="gn-cta" href="{page_link("predict")}" target="_self">'
+        f"Start Assessment</a></div></div>"
+    )
 
 
 # ============================================================
-# TABS
+# PAGE : HOME
 # ============================================================
 
-tab_single, tab_batch, tab_about = st.tabs(
-    [
-        "Single Prediction",
-        "Batch Prediction",
-        "About",
-    ]
-)
+FEATURES = [
+    ("person", "Individual patient assessment",
+     "Record 14 routine antenatal parameters for one mother and obtain "
+     "her GDM status immediately."),
+    ("table", "Cohort assessment",
+     "Assess an entire antenatal clinic list or study cohort from a "
+     "single spreadsheet."),
+    ("drop", "Routine antenatal data",
+     "Relies only on measurements already collected in antenatal care: "
+     "history, blood pressure, fasting glucose and complete blood count."),
+    ("flow", "Handles incomplete records",
+     "Missing laboratory values are estimated from the other recorded "
+     "parameters, as in the derivation study."),
+    ("download", "Exportable reports",
+     "Download individual or cohort assessments for the patient record "
+     "or further epidemiological analysis."),
+    ("book", "Transparent methodology",
+     "The predictive model, data handling and clinical parameters are "
+     "documented openly."),
+]
+
+STEPS = [
+    ("1", "Record", "Enter the mother's demographic, obstetric, clinical "
+     "and laboratory findings, or complete the cohort template."),
+    ("2", "Standardise", "Values are checked, missing laboratory results "
+     "are estimated and measurements are harmonised."),
+    ("3", "Assess", "The Random Forest model compares the maternal profile "
+     "with patterns learned from the study cohort."),
+    ("4", "Report", "The outcome is shown as GDM predicted (YES) or GDM "
+     "not predicted (NO), with a downloadable report."),
+]
+
+FAQS = [
+    ("What is Glunova AI?",
+     "Glunova AI is a clinical decision-support web server that assesses "
+     "Gestational Diabetes Mellitus status from routinely collected "
+     "antenatal data using a Random Forest model."),
+    ("Who can use Glunova AI?",
+     "Obstetric and maternal health researchers, clinicians and students. "
+     "Access is free and does not require an account."),
+    ("Which clinical data are required?",
+     "Maternal age, gravidity, BMI, family history of diabetes, blood group, "
+     "mean systolic and diastolic blood pressure, fasting plasma glucose and "
+     "six complete blood count parameters."),
+    ("Is patient data stored?",
+     "No. Entered values and uploaded files are processed only to generate "
+     "the assessment and are not saved by the application."),
+    ("Can the outcome be used for diagnosis?",
+     "No. Glunova AI is intended for research and educational use only. "
+     "GDM must be diagnosed according to established clinical criteria by "
+     "a qualified healthcare professional."),
+]
 
 
-# ============================================================
-# TAB 1 : SINGLE PREDICTION
-# ============================================================
+def partner_logo(partner):
+    logo = PARTNERS_DIR / partner["logo"] if partner.get("logo") else None
+    if logo and logo.exists():
+        return (
+            f'<div class="gn-partner"><img src="{image_data_uri(logo)}" '
+            f'alt="{partner["name"]}" title="{partner["name"]}"></div>'
+        )
+    return (
+        '<div class="gn-partner placeholder"><b>Hospital logo</b>'
+        f'<code>assets/partners/{partner.get("logo") or "logo.png"}</code>'
+        "</div>"
+    )
 
-with tab_single:
 
-    st.subheader("Maternal Clinical Information")
-
-    with st.form("gdm_prediction_form"):
-
-        left, right = st.columns(2)
-
-        # ----------------------------------------------------
-        # LEFT
-        # ----------------------------------------------------
-
-        with left:
-
-            st.markdown("## 👤 Demographic & Obstetric Information")
-
-            age = st.number_input(
-                "Maternal Age (years)",
-                min_value=10.0,
-                max_value=70.0,
-                value=None,
-                placeholder="Enter maternal age",
-                step=1.0,
-            )
-
-            gravidity = st.number_input(
-                "Gravidity",
-                min_value=0.0,
-                max_value=20.0,
-                value=None,
-                placeholder="Enter gravidity",
-                step=1.0,
-            )
-
-            family_history = st.selectbox(
-                "Family History of Diabetes",
-                ["No", "Yes"],
-                index=None,
-                placeholder="Select",
-            )
-
-            bmi = st.number_input(
-                "BMI",
-                min_value=10.0,
-                max_value=80.0,
-                value=None,
-                placeholder="Enter BMI",
-                step=0.1,
-                format="%.1f",
-            )
-
-            blood_type = st.selectbox(
-                "Blood Type",
-                ["A", "B", "AB", "O"],
-                index=None,
-                placeholder="Select blood type",
-            )
-
-            st.divider()
-
-            st.markdown("## 🩺 Blood Pressure")
-
-            systolic = st.number_input(
-                "Mean Systolic BP",
-                min_value=50.0,
-                max_value=250.0,
-                value=None,
-                placeholder="Enter mean systolic BP",
-                step=0.1,
-                format="%.1f",
-            )
-
-            diastolic = st.number_input(
-                "Mean Diastolic BP",
-                min_value=30.0,
-                max_value=150.0,
-                value=None,
-                placeholder="Enter mean diastolic BP",
-                step=0.1,
-                format="%.1f",
-            )
-
-        # ----------------------------------------------------
-        # RIGHT
-        # ----------------------------------------------------
-
-        with right:
-
-            st.markdown("## 🧪 Biochemical Investigation")
-
-            fasting_glucose = st.number_input(
-                "Fasting Glucose (mg/dl)",
-                min_value=20.0,
-                max_value=500.0,
-                value=None,
-                placeholder="Enter fasting glucose",
-                step=0.1,
-                format="%.1f",
-            )
-
-            st.divider()
-
-            st.markdown("## 🩸 Hematological Parameters")
-
-            hb = st.number_input(
-                "Hb (g/dl)",
-                min_value=1.0,
-                max_value=30.0,
-                value=None,
-                placeholder="Enter Hb",
-                step=0.01,
-                format="%.2f",
-            )
-
-            rbc = st.number_input(
-                "RBC (millions/ml)",
-                min_value=0.1,
-                max_value=15.0,
-                value=None,
-                placeholder="Enter RBC",
-                step=0.01,
-                format="%.2f",
-            )
-
-            wbc = st.number_input(
-                "WBC (10^3/uL)",
-                min_value=0.1,
-                max_value=100.0,
-                value=None,
-                placeholder="Enter WBC",
-                step=0.01,
-                format="%.2f",
-            )
-
-            mchc = st.number_input(
-                "MCHC (g/dl)",
-                min_value=1.0,
-                max_value=60.0,
-                value=None,
-                placeholder="Enter MCHC",
-                step=0.01,
-                format="%.2f",
-            )
-
-            lymphocytes = st.number_input(
-                "Lymphocytes (Absolute count 10^3/uL)",
-                min_value=0.0,
-                max_value=100.0,
-                value=None,
-                placeholder="Enter lymphocyte count",
-                step=0.01,
-                format="%.2f",
-            )
-
-            eosinophils = st.number_input(
-                "Eosinophils (Absolute count 10^3/uL)",
-                min_value=0.0,
-                max_value=100.0,
-                value=None,
-                placeholder="Enter eosinophil count",
-                step=0.01,
-                format="%.2f",
-            )
-
-        st.divider()
-
-        predict = st.form_submit_button(
-            "🔬 Predict GDM",
-            use_container_width=True,
-            type="primary",
+def render_home():
+    with st.container(key="hero"):
+        hero_left, hero_right = st.columns(
+            [1, 1.05], gap="large", vertical_alignment="center"
         )
 
-    # ========================================================
-    # PREDICTION
-    # ========================================================
-
-    if predict:
-
-        values = {
-            "Maternal age": age,
-            "Gravidity": gravidity,
-            "Family History of Diabetes": 1 if family_history == "Yes" else 0,
-            "Mean Diastolic BP": diastolic,
-            "Mean Systolic BP": systolic,
-            "Fasting Glucose (mg/dl)": fasting_glucose,
-            "Hb (g/dl)": hb,
-            "RBC (millions/ml)": rbc,
-            "WBC (10^3/uL)": wbc,
-            "MCHC (g/dl)": mchc,
-            "Lymphocytes (Absolute count 10^3/uL)": lymphocytes,
-            "Eosinophils (Absolute count 10^3/uL)": eosinophils,
-            "BMI": bmi,
-            "Blood Type": blood_type,
-        }
-
-        missing_values = [
-            name for name, value in values.items()
-            if value is None
-        ]
-
-        if missing_values:
-
-            st.warning(
-                "Please provide all required values before prediction:\n\n"
-                + ", ".join(missing_values)
+        with hero_left:
+            html(
+                '<div class="gn-hero-title">Glunova AI</div>'
+                '<div class="gn-hero-tag">Clinical decision support for '
+                "Gestational Diabetes Mellitus</div>"
+                '<div class="gn-hero-text">Glunova AI assesses maternal GDM '
+                "status from routinely collected antenatal data: "
+                "demographic and obstetric history, blood pressure, fasting "
+                "plasma glucose and the complete blood count. Developed at "
+                f"the {LAB_NAME}.</div>"
+                f'<a class="gn-btn primary" href="{page_link("predict")}" '
+                'target="_self">Assess a Patient</a>'
+                f'<a class="gn-btn outline" href="{page_link("batch")}" '
+                'target="_self">Assess a Cohort</a>'
+                '<div class="gn-stats">'
+                '<div class="gn-stat"><div class="num">14</div>'
+                '<div class="lbl">Antenatal parameters</div></div>'
+                '<div class="gn-stat"><div class="num">3</div>'
+                '<div class="lbl">Clinical domains</div></div>'
+                '<div class="gn-stat"><div class="num">CBC</div>'
+                '<div class="lbl">Routine laboratory tests</div></div>'
+                '<div class="gn-stat"><div class="num">Open</div>'
+                '<div class="lbl">Free access</div></div>'
+                "</div>"
             )
 
+        with hero_right:
+            html(slideshow_html())
+
+    # ---------------- Features ----------------
+    heading("Features")
+    tiles = "".join(
+        f'<div class="gn-feature">{icon(ICONS[key])}'
+        f"<div><b>{title}</b>{text}</div></div>"
+        for key, title, text in FEATURES
+    )
+    html(f'<div class="gn-features">{tiles}</div>')
+
+    # ---------------- How it works ----------------
+    heading("How it works")
+    html(
+        '<div class="gn-steps">'
+        + "".join(
+            f'<div class="gn-card"><div class="gn-step-num">{num}</div>'
+            f"<h4>{title}</h4><p>{text}</p></div>"
+            for num, title, text in STEPS
+        )
+        + "</div>"
+    )
+
+    # ---------------- Methodology ----------------
+    heading("The Predictive Model")
+    fig_col, text_col = st.columns(
+        [1.25, 1], gap="large", vertical_alignment="center"
+    )
+    with fig_col:
+        if RANDOM_FOREST_FIGURE.exists():
+            html(
+                '<div class="gn-figure">'
+                f'<img src="{image_data_uri(RANDOM_FOREST_FIGURE)}" '
+                'alt="Random Forest schematic">'
+                '<div class="gn-figcap"><b>Figure 1.</b> Schematic of the '
+                "Random Forest model. Each decision tree assesses the "
+                "maternal profile independently; the final outcome is "
+                "reached by majority vote.</div></div>"
+            )
+    with text_col:
+        html(
+            '<div class="gn-prose">'
+            '<div class="gn-h" style="margin-top:0">Random Forest</div>'
+            "<p>Glunova AI uses a <b>Random Forest</b>, an ensemble of many "
+            "decision trees. Each tree is built from a different sample of "
+            "the study cohort and learns a set of simple clinical rules, "
+            "for example combinations of fasting glucose, BMI and blood "
+            "count thresholds.</p>"
+            "<p>When a new maternal profile is entered, every tree gives its "
+            "own assessment. The outcome reported to the user is the "
+            "<b>majority vote</b> of all trees, which makes the model robust "
+            "to noise in any single measurement.</p>"
+            "<p>Because GDM-positive mothers were fewer than GDM-negative "
+            "mothers in the study cohort, the model was developed with "
+            "SMOTEENN resampling so that both groups were represented "
+            "fairly.</p></div>"
+        )
+
+    # ---------------- Collaborating hospitals ----------------
+    html(
+        '<div class="gn-bleed gn-band">'
+        '<div class="gn-heading"><span>Collaborating Hospitals</span></div>'
+        '<div class="gn-partners">'
+        + "".join(partner_logo(p) for p in PARTNERS)
+        + "</div></div>"
+    )
+
+    # ---------------- About ----------------
+    heading("About Us")
+    html(
+        '<p class="gn-lead">Gestational Diabetes Mellitus is one of the '
+        "most common metabolic complications of pregnancy, and its early "
+        "identification allows timely lifestyle, dietary and medical "
+        "management. Glunova AI was developed within a research study on "
+        "the prediction of GDM from routinely available clinical, "
+        "haematological and demographic data, and makes the final model "
+        "openly accessible to the maternal health community. It is "
+        f"developed and maintained by the {LAB_NAME}.</p>"
+    )
+
+    # ---------------- FAQ ----------------
+    heading("Frequently Asked Questions")
+    html(
+        '<div class="gn-faq">'
+        + "".join(
+            f'<div class="gn-faq-row"><div class="gn-faq-q"><span>?</span>'
+            f'{q}</div><div class="gn-faq-a">{a}</div></div>'
+            for q, a in FAQS
+        )
+        + "</div>"
+    )
+
+
+# ============================================================
+# PAGE : TEAM
+# ============================================================
+
+def initials(name):
+    return "".join(part[0] for part in name.split()[:2]).upper()
+
+
+def render_team():
+    page_header(
+        "Team",
+        f"The research team behind Glunova AI at the {LAB_NAME}.",
+    )
+
+    cards = []
+    for author in AUTHORS:
+        photo = TEAM_DIR / author["photo"] if author.get("photo") else None
+        if photo and photo.exists():
+            avatar = f'<img src="{image_data_uri(photo)}" alt="">'
         else:
+            avatar = initials(author["name"])
+        email = (
+            f'<p><a href="mailto:{author["email"]}">{author["email"]}</a></p>'
+            if author.get("email") else ""
+        )
+        cards.append(
+            f'<div class="gn-card gn-person"><div class="gn-avatar">{avatar}'
+            f'</div><h4>{author["name"]}</h4>'
+            f'<div class="role">{author.get("role", "")}</div>'
+            f'<div class="aff">{author.get("affiliation", "")}</div>'
+            f"{email}</div>"
+        )
+    html(f'<div class="gn-cards three">{"".join(cards)}</div>')
 
-            try:
-
-                patient = pd.DataFrame([values])
-                model_input = preprocess_for_model(patient)
-
-                prediction = int(model.predict(model_input)[0])
-
-                st.divider()
-                st.subheader("GDM Prediction")
-
-                if prediction == 1:
-
-                    st.error("## YES")
-
-                    st.markdown(
-                        """
-                        The entered maternal clinical profile is
-                        **predicted to be positive for Gestational
-                        Diabetes Mellitus (GDM)**.
-                        """
-                    )
-
-                else:
-
-                    st.success("## NO")
-
-                    st.markdown(
-                        """
-                        The entered maternal clinical profile is
-                        **predicted to be negative for Gestational
-                        Diabetes Mellitus (GDM)**.
-                        """
-                    )
-
-                st.info(
-                    "Research Use Only. This prediction should not "
-                    "replace professional clinical diagnosis or "
-                    "medical decision-making."
-                )
-
-                st.markdown("### Submitted Values")
-
-                show = patient.T.reset_index()
-                show.columns = ["Variable", "Value"]
-
-                st.dataframe(
-                    show,
-                    hide_index=True,
-                    use_container_width=True,
-                )
-
-                # ------------------------------------------------
-                # DOWNLOAD
-                # ------------------------------------------------
-
-                result = patient.copy()
-                result["GDM Prediction"] = (
-                    "Yes" if prediction == 1 else "No"
-                )
-
-                st.download_button(
-                    "📥 Download Prediction Report",
-                    data=result.to_csv(index=False).encode("utf-8"),
-                    file_name="Glunova_AI_GDM_Prediction.csv",
-                    mime="text/csv",
-                    use_container_width=True,
-                )
-
-            except Exception as e:
-
-                st.error(
-                    "An error occurred while generating the prediction: "
-                    + str(e)
-                )
+    heading("Contact")
+    contact = [f"<h4>{LAB_NAME}</h4>"]
+    for value in (LAB_INSTITUTION, LAB_ADDRESS):
+        if value:
+            contact.append(f"<p>{value}</p>")
+    if LAB_EMAIL:
+        contact.append(
+            f'<p>Email: <a href="mailto:{LAB_EMAIL}">{LAB_EMAIL}</a></p>'
+        )
+    if LAB_WEBSITE:
+        contact.append(
+            f'<p>Website: <a href="{LAB_WEBSITE}" target="_blank">'
+            f"{LAB_WEBSITE}</a></p>"
+        )
+    html(
+        '<div class="gn-card" style="max-width:40rem;margin:0 auto;'
+        f'text-align:center">{"".join(contact)}</div>'
+    )
 
 
 # ============================================================
-# TAB 2 : BATCH PREDICTION
+# FOOTER
 # ============================================================
 
-with tab_batch:
+def render_footer():
+    lab_lines = [f'<p class="gn-lab">{LAB_NAME}</p>']
+    for value in (LAB_INSTITUTION, LAB_ADDRESS):
+        if value:
+            lab_lines.append(f"<p>{value}</p>")
+    if LAB_EMAIL:
+        lab_lines.append(
+            f'<p><a href="mailto:{LAB_EMAIL}">{LAB_EMAIL}</a></p>'
+        )
+    if LAB_WEBSITE:
+        lab_lines.append(
+            f'<p><a href="{LAB_WEBSITE}" target="_blank">{LAB_WEBSITE}</a></p>'
+        )
 
-    st.subheader("Batch GDM Prediction")
+    author_lines = []
+    for author in AUTHORS:
+        parts = [f'<p class="gn-author-name">{author["name"]}</p>']
+        for key in ("role", "affiliation"):
+            if author.get(key):
+                parts.append(f'<p class="gn-author-meta">{author[key]}</p>')
+        if author.get("email"):
+            parts.append(
+                f'<p class="gn-author-meta"><a href="mailto:{author["email"]}">'
+                f'{author["email"]}</a></p>'
+            )
+        author_lines.append(f'<div class="gn-author">{"".join(parts)}</div>')
 
-    st.caption(
-        "Upload a CSV file containing the clinical variables. "
-        "The application will automatically preprocess the data "
-        "using the same preprocessing scheme used during model "
-        "development."
+    quick_links = "".join(
+        f'<a href="{page_link(key)}" target="_self">{label}</a>'
+        for key, label in PAGES.items()
+    )
+
+    citation_text = CITATION or (
+        "If Glunova AI supports your research, please acknowledge the "
+        f"{LAB_NAME}."
+    )
+
+    html(
+        '<div class="gn-bleed gn-footer"><div class="gn-footer-grid">'
+        '<div><div class="gn-footer-brand">Glunova AI</div>'
+        "<p>A clinical decision-support web server for Gestational Diabetes "
+        "Mellitus, based on routinely collected antenatal data.</p>"
+        f'<div class="gn-footer-lab">{"".join(lab_lines)}</div></div>'
+        f'<div><h5>{"Author" if len(AUTHORS) == 1 else "Authors"}</h5>'
+        f'{"".join(author_lines)}</div>'
+        f'<div><h5>Quick links</h5><div class="gn-footer-links">'
+        f"{quick_links}</div></div>"
+        f"<div><h5>Citation</h5><p>{citation_text}</p>"
+        '<h5 style="margin-top:1rem">Disclaimer</h5>'
+        "<p>For research and educational use only. Not a substitute for "
+        "professional clinical diagnosis.</p></div>"
+        '</div><div class="gn-footer-bottom">&copy; 2026 Glunova AI &middot; '
+        f"{LAB_NAME}. All rights reserved.</div></div>"
+    )
+
+
+# ============================================================
+# PAGE : SINGLE PREDICTION
+# ============================================================
+
+def render_predict():
+    page_header(
+        "Patient Assessment",
+        "Record the mother's antenatal findings below to assess her GDM "
+        "status. All fields are required.",
+    )
+
+    form_col, side_col = st.columns([2.1, 1], gap="large")
+
+    with form_col:
+
+        with st.form("gdm_prediction_form", border=False):
+
+            # ----------------------------------------------------
+            # 1. DEMOGRAPHIC & OBSTETRIC
+            # ----------------------------------------------------
+
+            with st.container(key="card_demographic"):
+
+                section_header(
+                    "I.",
+                    "Demographic & Obstetric History",
+                    "Maternal characteristics recorded at antenatal booking.",
+                )
+
+                c1, c2, c3 = st.columns(3)
+
+                with c1:
+                    age = st.number_input(
+                        "Maternal age (years)",
+                        min_value=10.0,
+                        max_value=70.0,
+                        value=None,
+                        placeholder="e.g. 29",
+                        step=1.0,
+                        format="%.0f",
+                    )
+
+                with c2:
+                    gravidity = st.number_input(
+                        "Gravidity",
+                        min_value=0.0,
+                        max_value=20.0,
+                        value=None,
+                        placeholder="e.g. 2",
+                        step=1.0,
+                        format="%.0f",
+                        help="Total number of pregnancies, including the "
+                             "current one.",
+                    )
+
+                with c3:
+                    bmi = st.number_input(
+                        "BMI (kg/m²)",
+                        min_value=10.0,
+                        max_value=80.0,
+                        value=None,
+                        placeholder="e.g. 24.5",
+                        step=0.1,
+                        format="%.1f",
+                    )
+
+                c4, c5, _ = st.columns(3)
+
+                with c4:
+                    family_history = st.selectbox(
+                        "Family history of diabetes",
+                        ["No", "Yes"],
+                        index=None,
+                        placeholder="Select",
+                    )
+
+                with c5:
+                    blood_type = st.selectbox(
+                        "Blood group",
+                        ["A", "B", "AB", "O"],
+                        index=None,
+                        placeholder="Select",
+                    )
+
+            # ----------------------------------------------------
+            # 2. CLINICAL & BIOCHEMICAL
+            # ----------------------------------------------------
+
+            with st.container(key="card_clinical"):
+
+                section_header(
+                    "II.",
+                    "Clinical & Biochemical Measurements",
+                    "Mean blood pressure readings and fasting plasma glucose.",
+                )
+
+                c1, c2, c3 = st.columns(3)
+
+                with c1:
+                    systolic = st.number_input(
+                        "Mean systolic BP (mmHg)",
+                        min_value=50.0,
+                        max_value=250.0,
+                        value=None,
+                        placeholder="e.g. 115.0",
+                        step=0.1,
+                        format="%.1f",
+                    )
+
+                with c2:
+                    diastolic = st.number_input(
+                        "Mean diastolic BP (mmHg)",
+                        min_value=30.0,
+                        max_value=150.0,
+                        value=None,
+                        placeholder="e.g. 75.0",
+                        step=0.1,
+                        format="%.1f",
+                    )
+
+                with c3:
+                    fasting_glucose = st.number_input(
+                        "Fasting glucose (mg/dL)",
+                        min_value=20.0,
+                        max_value=500.0,
+                        value=None,
+                        placeholder="e.g. 88.0",
+                        step=0.1,
+                        format="%.1f",
+                    )
+
+            # ----------------------------------------------------
+            # 3. HAEMATOLOGICAL
+            # ----------------------------------------------------
+
+            with st.container(key="card_haematological"):
+
+                section_header(
+                    "III.",
+                    "Haematological Parameters",
+                    "Values from the complete blood count (CBC).",
+                )
+
+                c1, c2, c3 = st.columns(3)
+
+                with c1:
+                    hb = st.number_input(
+                        "Haemoglobin, Hb (g/dL)",
+                        min_value=1.0,
+                        max_value=30.0,
+                        value=None,
+                        placeholder="e.g. 11.50",
+                        step=0.01,
+                        format="%.2f",
+                    )
+
+                with c2:
+                    rbc = st.number_input(
+                        "RBC (millions/mL)",
+                        min_value=0.1,
+                        max_value=15.0,
+                        value=None,
+                        placeholder="e.g. 4.20",
+                        step=0.01,
+                        format="%.2f",
+                    )
+
+                with c3:
+                    wbc = st.number_input(
+                        "WBC (×10³/µL)",
+                        min_value=0.1,
+                        max_value=100.0,
+                        value=None,
+                        placeholder="e.g. 9.10",
+                        step=0.01,
+                        format="%.2f",
+                    )
+
+                c4, c5, c6 = st.columns(3)
+
+                with c4:
+                    mchc = st.number_input(
+                        "MCHC (g/dL)",
+                        min_value=1.0,
+                        max_value=60.0,
+                        value=None,
+                        placeholder="e.g. 33.00",
+                        step=0.01,
+                        format="%.2f",
+                        help="Mean corpuscular haemoglobin concentration.",
+                    )
+
+                with c5:
+                    lymphocytes = st.number_input(
+                        "Lymphocytes (×10³/µL)",
+                        min_value=0.0,
+                        max_value=100.0,
+                        value=None,
+                        placeholder="e.g. 2.10",
+                        step=0.01,
+                        format="%.2f",
+                        help="Absolute lymphocyte count.",
+                    )
+
+                with c6:
+                    eosinophils = st.number_input(
+                        "Eosinophils (×10³/µL)",
+                        min_value=0.0,
+                        max_value=100.0,
+                        value=None,
+                        placeholder="e.g. 0.15",
+                        step=0.01,
+                        format="%.2f",
+                        help="Absolute eosinophil count.",
+                    )
+
+            _, button_col, _ = st.columns([1, 1, 1])
+
+            with button_col:
+                predict = st.form_submit_button(
+                    "Assess GDM Status",
+                    type="primary",
+                    width="stretch",
+                )
+
+    with side_col:
+
+        if not predict:
+            html(
+                '<div class="gn-result pending">'
+                '<div class="gn-result-label">Assessment outcome</div>'
+                '<div class="gn-result-text">The outcome will appear here '
+                "once the findings are submitted.</div></div>"
+            )
+
+        if predict:
+
+            values = {
+                "Maternal age": age,
+                "Gravidity": gravidity,
+                "Family History of Diabetes": 1 if family_history == "Yes" else 0,
+                "Mean Diastolic BP": diastolic,
+                "Mean Systolic BP": systolic,
+                "Fasting Glucose (mg/dl)": fasting_glucose,
+                "Hb (g/dl)": hb,
+                "RBC (millions/ml)": rbc,
+                "WBC (10^3/uL)": wbc,
+                "MCHC (g/dl)": mchc,
+                "Lymphocytes (Absolute count 10^3/uL)": lymphocytes,
+                "Eosinophils (Absolute count 10^3/uL)": eosinophils,
+                "BMI": bmi,
+                "Blood Type": blood_type,
+            }
+
+            missing_values = [
+                name for name, value in values.items()
+                if value is None
+            ]
+
+            # Family history is encoded before the check, so test it directly.
+            if family_history is None:
+                missing_values.insert(2, "Family History of Diabetes")
+
+            if missing_values:
+
+                st.warning(
+                    "Please complete the following findings before the "
+                    "assessment: " + ", ".join(missing_values) + "."
+                )
+
+            else:
+
+                try:
+
+                    patient = pd.DataFrame([values])
+                    model_input = preprocess_for_model(patient)
+
+                    prediction = int(model.predict(model_input)[0])
+
+                    st.markdown(
+                        '<div class="gn-h">Assessment Outcome</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    if prediction == 1:
+                        css_class, verdict, sentence = (
+                            "positive",
+                            "YES",
+                            "The entered maternal clinical profile is "
+                            "<b>predicted to be positive</b> for Gestational "
+                            "Diabetes Mellitus.",
+                        )
+                    else:
+                        css_class, verdict, sentence = (
+                            "negative",
+                            "NO",
+                            "The entered maternal clinical profile is "
+                            "<b>predicted to be negative</b> for Gestational "
+                            "Diabetes Mellitus.",
+                        )
+
+                    st.markdown(
+                        f"""
+                        <div class="gn-result {css_class}">
+                            <div class="gn-result-label">GDM predicted</div>
+                            <div class="gn-result-value">{verdict}</div>
+                            <div class="gn-result-text">{sentence}</div>
+                            <div class="gn-note">
+                                Research use only. This output should not
+                                replace professional clinical diagnosis or
+                                medical decision-making.
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    with st.expander("Recorded clinical findings"):
+
+                        show = patient.T.reset_index()
+                        show.columns = ["Clinical parameter", "Value"]
+                        show.loc[
+                            show["Clinical parameter"] == "Family History of Diabetes",
+                            "Value",
+                        ] = family_history
+                        show["Value"] = show["Value"].astype(str)
+
+                        st.dataframe(
+                            show,
+                            hide_index=True,
+                            width="stretch",
+                            height=35 * (len(show) + 1) + 3,
+                        )
+
+                    # ------------------------------------------------
+                    # DOWNLOAD
+                    # ------------------------------------------------
+
+                    result = patient.copy()
+                    result["GDM Prediction"] = (
+                        "Yes" if prediction == 1 else "No"
+                    )
+
+                    st.download_button(
+                        "Download Assessment Report (CSV)",
+                        data=result.to_csv(index=False).encode("utf-8"),
+                        file_name="Glunova_AI_GDM_Prediction.csv",
+                        mime="text/csv",
+                    )
+
+                except Exception as e:
+
+                    st.error(
+                        "An error occurred during the assessment: "
+                        + str(e)
+                    )
+
+        with st.container(key="card_guidance"):
+            st.markdown(
+                """
+                <div class="gn-section-title">How to use</div>
+                <ol class="gn-list">
+                    <li>Record all 14 antenatal findings in sections
+                        I&ndash;III.</li>
+                    <li>Use the units shown next to each field.</li>
+                    <li>Select <b>Assess GDM Status</b> to obtain the
+                        outcome.</li>
+                    <li>Download the report for the patient record.</li>
+                </ol>
+                <div class="gn-section-title">Output</div>
+                <p class="gn-side-text">
+                    <b>YES</b> &mdash; GDM predicted<br>
+                    <b>NO</b> &mdash; GDM not predicted
+                </p>
+                <div class="gn-section-title">Model</div>
+                <p class="gn-side-text">
+                    Random Forest model developed on routinely
+                    collected antenatal data. To assess several mothers
+                    at once, use <b>Cohort Assessment</b>.
+                </p>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+# ============================================================
+# PAGE : BATCH PREDICTION
+# ============================================================
+
+def render_batch():
+    page_header(
+        "Cohort Assessment",
+        "Assess GDM status for an antenatal clinic list or study cohort "
+        "from a single spreadsheet (CSV).",
     )
 
     # Exact columns accepted for the upload.
@@ -576,18 +1821,47 @@ with tab_batch:
         columns=CLINICAL_FEATURES
     )
 
-    st.download_button(
-        label="📥 Download Blank Template",
-        data=batch_template.to_csv(index=False).encode("utf-8"),
-        file_name="Glunova_AI_Template.csv",
-        mime="text/csv",
-    )
+    step1, step2 = st.columns([1, 1.4], gap="large")
 
-    uploaded = st.file_uploader(
-        "Upload CSV",
-        type=["csv"],
-        key="batch_upload",
-    )
+    with step1:
+        with st.container(key="card_step1"):
+            st.markdown(
+                """
+                <div class="gn-step">Step 1</div>
+                <div class="gn-step-title">Download the data collection template</div>
+                <div class="gn-step-text">
+                    A spreadsheet (CSV) with one column for each of the
+                    14 antenatal parameters. Enter one mother per row.
+                    Blood Type: A, B, AB or O. Family History of
+                    Diabetes: 1 (yes) or 0 (no).
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.download_button(
+                label="Download Template",
+                data=batch_template.to_csv(index=False).encode("utf-8"),
+                file_name="Glunova_AI_Template.csv",
+                mime="text/csv",
+            )
+
+    with step2:
+        with st.container(key="card_step2"):
+            st.markdown(
+                """
+                <div class="gn-step">Step 2</div>
+                <div class="gn-step-title">Upload the completed spreadsheet</div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            uploaded = st.file_uploader(
+                "Upload CSV",
+                type=["csv"],
+                key="batch_upload",
+                label_visibility="collapsed",
+            )
 
     if uploaded is not None:
 
@@ -604,9 +1878,8 @@ with tab_batch:
             if missing:
 
                 st.error(
-                    "The uploaded file is missing these required "
-                    "columns:\n\n"
-                    + ", ".join(missing)
+                    "The uploaded spreadsheet is missing these "
+                    "clinical parameters: " + ", ".join(missing)
                 )
 
             else:
@@ -624,166 +1897,166 @@ with tab_batch:
                     for x in pred
                 ]
 
-                st.success(
-                    f"Successfully analyzed {len(results)} patient(s)."
+                st.markdown(
+                    '<div class="gn-h">Cohort Outcome</div>',
+                    unsafe_allow_html=True,
                 )
 
-                c1, c2 = st.columns(2)
+                m1, m2, m3 = st.columns(3)
 
-                with c1:
+                with m1:
+                    st.metric("Mothers assessed", len(results))
+
+                with m2:
                     st.metric(
-                        "Predicted GDM: YES",
+                        "GDM predicted: YES",
                         int((pred == 1).sum()),
                     )
 
-                with c2:
+                with m3:
                     st.metric(
-                        "Predicted GDM: NO",
+                        "GDM predicted: NO",
                         int((pred == 0).sum()),
                     )
 
                 st.dataframe(
                     results,
-                    use_container_width=True,
+                    width="stretch",
                 )
 
                 st.download_button(
-                    "📥 Download GDM Predictions",
+                    "Download Cohort Report (CSV)",
                     data=results.to_csv(index=False).encode("utf-8"),
                     file_name="Glunova_AI_GDM_Predictions.csv",
                     mime="text/csv",
-                    use_container_width=True,
                 )
 
         except Exception as e:
 
             st.error(
-                "Unable to process the uploaded file: " + str(e)
+                "Unable to process the uploaded spreadsheet: " + str(e)
             )
 
 
 # ============================================================
-# TAB 3 : ABOUT
+# PAGE : ABOUT
 # ============================================================
 
-with tab_about:
-
-    st.header("About Glunova AI")
-
-    st.markdown(
-        """
-        ### Glunova AI
-
-        **Glunova AI** is an Artificial Intelligence-based
-        classification tool developed for prediction of
-        **Gestational Diabetes Mellitus (GDM)**.
-
-        The application uses a trained **Random Forest classifier**
-        to analyze selected maternal demographic, obstetric,
-        clinical, biochemical, hematological and anthropometric
-        variables.
-
-        ---
-
-        ### Model
-
-        - Random Forest Classifier
-        - Binary classification
-        - **YES** = GDM predicted
-        - **NO** = GDM not predicted
-        - SMOTEENN was used during model training to address
-          class imbalance.
-
-        ---
-
-        ### Input Variables
-
-        The prediction model uses:
-
-        - Maternal age
-        - Gravidity
-        - Family History of Diabetes
-        - Mean Diastolic BP
-        - Mean Systolic BP
-        - Fasting Glucose
-        - Hb
-        - RBC
-        - WBC
-        - MCHC
-        - Lymphocyte count
-        - Eosinophil count
-        - Blood Type
-        - BMI
-
-        ---
-
-        ### Output
-
-        Glunova AI provides a binary classification:
-
-        **YES → GDM predicted**
-
-        **NO → GDM not predicted**
-
-        No probability score is displayed.
-
-        ---
-
-        ### Disclaimer
-
-        **Research Use Only**
-
-        Glunova AI is intended for research and educational
-        purposes. It should not be used as a substitute for
-        professional medical diagnosis or clinical decision-making.
-        """
+def render_about():
+    page_header(
+        "About Glunova AI",
+        "Purpose, methodology and clinical data dictionary.",
     )
 
-    st.divider()
+    text_col, spec_col = st.columns([1.6, 1], gap="large")
 
-    with st.expander("📋 Variable Reference"):
-
-        reference = pd.DataFrame(
-            {
-                "Variable": CLINICAL_FEATURES,
-                "Description": [
-                    "Maternal age in years",
-                    "Number of pregnancies / gravidity",
-                    "Family history of diabetes (Yes/No)",
-                    "Mean diastolic blood pressure",
-                    "Mean systolic blood pressure",
-                    "Fasting glucose (mg/dl)",
-                    "Hemoglobin (g/dl)",
-                    "RBC count (millions/ml)",
-                    "WBC count (10^3/uL)",
-                    "Mean corpuscular hemoglobin concentration",
-                    "Absolute lymphocyte count (10^3/uL)",
-                    "Absolute eosinophil count (10^3/uL)",
-                    "Body mass index",
-                    "Maternal blood type"
-                ],
-            }
+    with text_col:
+        html(
+            '<div class="gn-prose">'
+            '<div class="gn-h" style="margin-top:0.4rem">Purpose</div>'
+            "<p><b>Glunova AI</b> is a clinical decision-support tool for "
+            "the assessment of <b>Gestational Diabetes Mellitus (GDM)</b>. "
+            "It evaluates the maternal demographic and obstetric history, "
+            "anthropometry, blood pressure, fasting plasma glucose and "
+            "complete blood count recorded during antenatal care.</p>"
+            '<div class="gn-h">Assessment outcome</div>'
+            "<p>For each mother the tool reports one of two outcomes: "
+            "<b>YES</b> (GDM predicted) or <b>NO</b> (GDM not predicted). "
+            "A risk score or probability is not reported.</p>"
+            '<div class="gn-h">Intended use</div>'
+            "<p>Glunova AI is intended for research and educational use. "
+            "It does not replace diagnosis of GDM according to established "
+            "clinical criteria, or the judgement of a qualified healthcare "
+            "professional.</p></div>"
         )
 
-        st.dataframe(
-            reference,
-            hide_index=True,
-            use_container_width=True,
-        )
+    with spec_col:
+        with st.container(key="card_spec"):
+            html(
+                '<div class="gn-section-title" style="margin-bottom:0.4rem">'
+                "Methodological Summary</div>"
+                '<table class="gn-spec">'
+                "<tr><td>Predictive model</td><td>Random Forest (ensemble "
+                "of decision trees)</td></tr>"
+                "<tr><td>Outcome</td><td>GDM predicted / not predicted"
+                "</td></tr>"
+                "<tr><td>Clinical parameters</td><td>14 routine antenatal "
+                "measures</td></tr>"
+                "<tr><td>Clinical domains</td><td>Demographic &amp; "
+                "obstetric, clinical &amp; biochemical, haematological"
+                "</td></tr>"
+                "<tr><td>Incomplete records</td><td>Missing laboratory "
+                "values estimated by iterative imputation</td></tr>"
+                "<tr><td>Class imbalance</td><td>SMOTEENN resampling "
+                "during model development</td></tr>"
+                "</table>"
+            )
+
+    html('<div class="gn-h">Clinical Data Dictionary</div>')
+
+    reference = pd.DataFrame(
+        {
+            "Clinical parameter": CLINICAL_FEATURES,
+            "Domain": [
+                "Demographic & obstetric",
+                "Demographic & obstetric",
+                "Demographic & obstetric",
+                "Clinical",
+                "Clinical",
+                "Biochemical",
+                "Haematological",
+                "Haematological",
+                "Haematological",
+                "Haematological",
+                "Haematological",
+                "Haematological",
+                "Anthropometric",
+                "Demographic & obstetric",
+            ],
+            "Definition": [
+                "Maternal age at assessment (years)",
+                "Total number of pregnancies, including the current one",
+                "Family history of diabetes (Yes/No)",
+                "Mean of recorded diastolic blood pressure readings (mmHg)",
+                "Mean of recorded systolic blood pressure readings (mmHg)",
+                "Fasting plasma glucose (mg/dL)",
+                "Haemoglobin concentration (g/dL)",
+                "Red blood cell count (millions/mL)",
+                "White blood cell count (x10^3/uL)",
+                "Mean corpuscular haemoglobin concentration (g/dL)",
+                "Absolute lymphocyte count (x10^3/uL)",
+                "Absolute eosinophil count (x10^3/uL)",
+                "Body mass index (kg/m2)",
+                "ABO blood group (A, B, AB, O)",
+            ],
+        }
+    )
+
+    st.dataframe(
+        reference,
+        hide_index=True,
+        width="stretch",
+        height=35 * (len(reference) + 1) + 3,
+    )
 
 
 # ============================================================
-# FOOTER
+# RENDER
 # ============================================================
 
-st.divider()
-
-st.caption(
-    "© 2026 Glunova AI | AI-based Gestational Diabetes Mellitus "
-    "Prediction Tool"
+st.markdown(
+    CUSTOM_CSS.replace("</style>", slideshow_keyframes() + "\n</style>"),
+    unsafe_allow_html=True,
 )
 
-st.caption(
-    "Developed for research purposes using a Random Forest "
-    "classification model."
-)
+render_nav()
+
+{
+    "home": render_home,
+    "predict": render_predict,
+    "batch": render_batch,
+    "about": render_about,
+    "team": render_team,
+}[page]()
+
+render_footer()

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="416" height="260" fill="#F3F7F9"/>
+  <text x="208" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A33">14 antenatal parameters in three clinical domains</text>
+
+  <g transform="translate(18,48)">
+    <rect width="120" height="196" rx="5" fill="#fff" stroke="#A9BBDD"/>
+    <rect width="120" height="5" rx="2" fill="#2F5597"/>
+    <text x="60" y="30" text-anchor="middle" font-size="26" font-weight="700" fill="#2F5597">5</text>
+    <text x="60" y="50" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1F2A33">Demographic &amp;</text>
+    <text x="60" y="63" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1F2A33">Obstetric</text>
+    <g font-size="10" fill="#5B6B77" text-anchor="middle">
+      <text x="60" y="92">Maternal age</text><text x="60" y="110">Gravidity</text>
+      <text x="60" y="128">BMI</text><text x="60" y="146">Family history</text>
+      <text x="60" y="164">Blood group</text>
+    </g>
+  </g>
+
+  <g transform="translate(148,48)">
+    <rect width="120" height="196" rx="5" fill="#fff" stroke="#A9BBDD"/>
+    <rect width="120" height="5" rx="2" fill="#4F73B5"/>
+    <text x="60" y="30" text-anchor="middle" font-size="26" font-weight="700" fill="#4F73B5">3</text>
+    <text x="60" y="50" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1F2A33">Clinical &amp;</text>
+    <text x="60" y="63" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1F2A33">Biochemical</text>
+    <g font-size="10" fill="#5B6B77" text-anchor="middle">
+      <text x="60" y="92">Systolic BP</text><text x="60" y="110">Diastolic BP</text>
+      <text x="60" y="128">Fasting plasma glucose</text>
+    </g>
+  </g>
+
+  <g transform="translate(278,48)">
+    <rect width="120" height="196" rx="5" fill="#fff" stroke="#A9BBDD"/>
+    <rect width="120" height="5" rx="2" fill="#8FA8D6"/>
+    <text x="60" y="30" text-anchor="middle" font-size="26" font-weight="700" fill="#3E62A6">6</text>
+    <text x="60" y="50" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1F2A33">Haematological</text>
+    <text x="60" y="63" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1F2A33">(CBC)</text>
+    <g font-size="10" fill="#5B6B77" text-anchor="middle">
+      <text x="60" y="92">Hb</text><text x="60" y="110">RBC</text>
+      <text x="60" y="128">WBC</text><text x="60" y="146">MCHC</text>
+      <text x="60" y="164">Lymphocytes</text><text x="60" y="182">Eosinophils</text>
+    </g>
+  </g>
+</svg>
