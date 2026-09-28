@@ -198,8 +198,9 @@ Email: [tahreemsajjad1072@gmail.com](mailto:tahreemsajjad1072@gmail.com)
 *Integrative Omics and Molecular Modeling Laboratory, Department of Bioinformatics and Biotechnology, Government College University Faisalabad (GCUF), Faisalabad, 38000, Pakistan*  
 Email: [rana.a@lums.edu.pk](mailto:rana.a@lums.edu.pk)
 
-** Ms. Maha Yousaf**
+**Ms. Maha Yousaf**
 *Department of Precision Medicine, Sungkyunkwan University School of Medicine, Suwon, 16419, Republic of Korea*
+
 Email: [yousafmaha25@gmail.com](mailto:yousafmaha25@gmail.com)
 
 **Dr. Muhammad Tahir ul Qamar** *(Correspondence)*  
