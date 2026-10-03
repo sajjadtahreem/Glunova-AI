@@ -2,13 +2,6 @@
   <img src="assets/images/glunova_logo.png" alt="Glunova AI" width="220">
 </p>
 
-<h1 align="center">Glunova AI</h1>
-
-<p align="center">
-  <b>A clinical decision-support web server for Gestational Diabetes Mellitus</b><br>
-  Developed at the Integrative Omics and Molecular Modelling Lab
-</p>
-
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.11-2F5597" alt="Python 3.11">
   <img src="https://img.shields.io/badge/built%20with-Streamlit-2F5597" alt="Streamlit">
@@ -16,6 +9,12 @@
   <img src="https://img.shields.io/badge/license-MIT-2F5597" alt="MIT License">
   <img src="https://img.shields.io/badge/use-research%20only-9E2A2B" alt="Research use only">
 </p>
+
+<p align="center">
+  <b>A clinical decision-support web server for Gestational Diabetes Mellitus</b><br>
+</p>
+
+
 
 ---
 
@@ -45,24 +44,14 @@ For each mother, Glunova AI reports one of two outcomes:
 | **YES** | GDM predicted |
 | **NO**  | GDM not predicted |
 
-A probability or risk score is not reported.
-
 ---
 
 ## Features
 
-- **Patient Assessment:** record 14 routine antenatal parameters for one
-  mother and see her outcome immediately.
-- **Cohort Assessment:** assess an entire antenatal clinic list or study
-  cohort from one spreadsheet (CSV), and download the results.
-- **Handles incomplete records:** missing laboratory values are estimated
-  with the imputation model fitted during the derivation study.
-- **Exportable reports:** individual and cohort assessments can be
-  downloaded as CSV files.
-- **Transparent methodology:** the model, data handling and clinical data
-  dictionary are documented in the application.
+- **Patient Assessment:** provides prediction for a single patient
+- **Cohort Assessment:** provides prediction for multiple patients 
+- **Exportable reports:** individual and cohort assessments can be downloaded as CSV files.
 - **Open access:** no account or login is required.
-
 ---
 
 ## Clinical Parameters
@@ -90,32 +79,6 @@ After blood group is encoded (AB and B, with O and A as reference), the model
 receives **15 features**.
 
 ---
-
-## Machine Learning Algorithm
-
-<p align="center">
-  <img src="assets/images/random_forest.png" alt="Random Forest schematic" width="640">
-</p>
-
-Glunova AI uses a **Random Forest**, an ensemble of decision trees. Each tree
-is trained on a different sample of the study cohort. For a new maternal
-profile, every tree gives its own assessment, and the reported outcome is
-their **majority vote**.
-
-Each record passes through the same data-handling steps used during model
-development:
-
-1. **Encoding** of blood group.
-2. **Estimation of missing values** with the iterative imputer fitted on the
-   training data.
-3. **Log transformation** of skewed laboratory parameters.
-4. **Selection** of the final model features, in the order used for training.
-
-During model development, class imbalance between GDM-positive and
-GDM-negative mothers was addressed with **SMOTEENN** resampling.
-
----
-
 ## Installation
 
 **Requirements:** Python 3.11 and Git. Conda is recommended.
@@ -190,29 +153,20 @@ Glunova-AI/
 
 ## Authors
 
-**Tahreem Sajjad**  
-*Integrative Omics and Molecular Modelling Lab, Department of Bioinformatics and Biotechnology, Government College University Faisalabad (GCUF), Faisalabad, Pakistan*  
+**Ms. Tahreem Sajjad**  
 Email: [tahreemsajjad1072@gmail.com](mailto:tahreemsajjad1072@gmail.com)
 
 **Mr. Rana Sheraz Ahmad**  
-*Integrative Omics and Molecular Modeling Laboratory, Department of Bioinformatics and Biotechnology, Government College University Faisalabad (GCUF), Faisalabad, 38000, Pakistan*  
 Email: [rana.a@lums.edu.pk](mailto:rana.a@lums.edu.pk)
 
 **Ms. Maha Yousaf**  
-*Department of Precision Medicine, Sungkyunkwan University School of Medicine, Suwon, 16419, Republic of Korea*  
 Email: [yousafmaha25@gmail.com](mailto:yousafmaha25@gmail.com)
 
-**Dr. Muhammad Tahir ul Qamar** *(Correspondence)*  
-*Integrative Omics and Molecular Modeling Laboratory, Department of Bioinformatics and Biotechnology, Government College University Faisalabad (GCUF), Faisalabad, 38000, Pakistan*  
-Email: [m.tahirulqamar@hotmail.com](mailto:m.tahirulqamar@hotmail.com)
+**Dr. Muhammad Tahir ul Qamar**  
+Email: [tahirulqamar@gcuf.edu.pk](mailto:tahirulqamar@gcuf.edu.pk)
 
 ---
-
----
-
-
 ## Intended Use
-
 > **Research use only.** Glunova AI is intended for research and educational
 > purposes. It is not a medical device and does not replace diagnosis of GDM
 > according to established clinical criteria, or the judgement of a qualified
@@ -226,7 +180,7 @@ assessment. The application does not store them.
 ## Citation
 
 If Glunova AI supports your research, please acknowledge the
-**Integrative Omics and Molecular Modelling Lab**. A formal citation will be
+**Integrative Omics and Molecular Modelling Lab, GCU, Faisalabad**. A formal citation will be
 added here once the associated study is published.
 
 ---
@@ -236,5 +190,5 @@ added here once the associated study is published.
 This project is released under the [MIT License](LICENSE).
 
 <p align="center">
-  © 2026 Glunova AI · Integrative Omics and Molecular Modelling Lab
+  © 2026 Glunova AI · Integrative Omics and Molecular Modelling Lab, Government College University, Faisalabad
 </p>
