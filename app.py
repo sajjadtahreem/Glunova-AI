@@ -16,11 +16,7 @@ import os
 import sys
 from pathlib import Path
 
-try:
-    import joblib
-    st.write("DEBUG: joblib imported successfully")
-except Exception as e:
-    st.error(f"DEBUG: joblib import failed: {e}")
+import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
