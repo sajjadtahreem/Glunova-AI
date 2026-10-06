@@ -885,8 +885,9 @@ a { color: var(--gn-primary); }
 }
 .gn-footer-grid {
     display: grid;
-    grid-template-columns: 1.4fr 1.2fr 1fr 1fr;
-    gap: 2rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+    align-items: start;
     padding: 2.4rem 0 1.6rem 0;
 }
 @media (max-width: 900px) {
@@ -1290,38 +1291,22 @@ def render_footer():
     )
 
     html(
-        '<div class="gn-bleed gn-footer">'
-        '<div style="display:grid; grid-template-columns:repeat(3, 1fr); '
-        'gap:3rem; align-items:start;">'
-
-        
-# Developer
-        '<div>'
-        '<h5>Developer</h5>'
-        '<p>Integrative Omics and Molecular Modelling Lab</p>'
-        '<p>Government College University, Faisalabad, Pakistan</p>'
-        '</div>'
-
+        '<div class="gn-bleed gn-footer"><div class="gn-footer-grid">'
+        # Developer
+        '<div><h5>Developer</h5>'
+        '<p class="gn-lab">Integrative Omics and Molecular Modelling Lab</p>'
+        '<p>Government College University, Faisalabad, Pakistan</p></div>'
         # Citation
-        f'<div>'
-        f'<h5>Citation</h5>'
-        f'<p>{citation_text}</p>'
-        f'</div>'
-
+        f'<div><h5>Citation</h5><p>{citation_text}</p></div>'
         # Disclaimer
-        '<div>'
-        '<h5>Disclaimer</h5>'
+        '<div><h5>Disclaimer</h5>'
         '<p>For research and educational use only. Not a substitute for '
-        'professional clinical diagnosis.</p>'
+        'professional clinical diagnosis.</p></div>'
         '</div>'
-
-        '</div>'
-
-        # Bottom copyright
+        # Bottom line
         '<div class="gn-footer-bottom">'
-        '&copy; 2026 Glunova AI. All rights reserved.'
-        '</div>'
-
+        '&copy; 2026 Integrative Omics and Molecular Modelling Lab. '
+        'All rights reserved.</div>'
         '</div>'
     )
 
