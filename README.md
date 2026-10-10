@@ -11,8 +11,7 @@
 </p>
 
 <p align="center">
-  <b>A clinical decision-support web server for Gestational Diabetes Mellitus</b><br>
-</p>
+  
 
 
 
